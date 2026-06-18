@@ -12,7 +12,7 @@ internal fun Project.configureIosTargets() {
             iosSimulatorArm64()
         ).forEach { iosTarget ->
             iosTarget.binaries.framework {
-                baseName = "ComposeApp"
+                baseName = "Shared"
                 isStatic = true
             }
         }

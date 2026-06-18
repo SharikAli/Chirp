@@ -10,7 +10,7 @@ projectCompileSdkVersion = "36"
 agp = "9.0.1"
 composeBom = "2026.05.01"
 kotlin = "2.4.0"
-ksp = "2.2.0-2.0.2"
+ksp = "2.3.4"
 google-services = "4.4.4"
 
 androidDesugarJdkLibs = "2.1.5"
