@@ -57,6 +57,7 @@ coil = "3.5.0"
 coil-network = "3.5.0"
 moko = "0.20.1"
 buildkonfig = "0.21.2"
+kermit = "2.0.6"
 
 # Desktop Version
 desktopPackageName = "Chirp"
@@ -142,6 +143,9 @@ moko-permissions = { module = "dev.icerock.moko:permissions", version.ref = "mok
 moko-permissions-compose = { module = "dev.icerock.moko:permissions-compose", version.ref = "moko" }
 moko-permissions-notifications = { module = "dev.icerock.moko:permissions-notifications", version.ref = "moko" }
 
+# Logging
+touchlab-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+
 android-desugarJdkLibs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 android-tools-common = { group = "com.android.tools", name = "common", version.ref = "androidTools" }
@@ -203,3 +207,18 @@ room = { id = "androidx.room", version.ref = "room" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 buildkonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildkonfig" }
+
+[bundles]
+koin-common = [
+    "koin-core",
+    "koin-compose",
+    "koin-compose-viewmodel"
+]
+
+ktor-common = [
+    "ktor-client-core",
+    "ktor-client-content-negotiation",
+    "ktor-serialization-kotlinx-json",
+    "ktor-client-auth",
+    "ktor-client-logging"
+]
