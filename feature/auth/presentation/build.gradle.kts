@@ -19,6 +19,9 @@ kotlin {
                 implementation(projects.core.domain)
                 implementation(projects.core.designsystem)
                 implementation(projects.core.presentation)
+
+                implementation(compose.components.resources)
+                implementation(libs.compose.uiToolingPreview)
             }
         }
 
