@@ -1,0 +1,11 @@
+package com.chatapp.auth.presentation.di
+
+import com.chatapp.auth.presentation.register.RegisterViewModel
+import com.chatapp.auth.presentation.register_success.RegisterSuccessViewModel
+import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.module
+
+val authPresentationModule = module {
+    viewModelOf(::RegisterViewModel)
+    viewModelOf(::RegisterSuccessViewModel)
+}

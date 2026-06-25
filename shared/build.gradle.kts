@@ -43,6 +43,10 @@ kotlin {
             implementation(libs.jetbrains.compose.viewmodel)
             implementation(libs.jetbrains.compose.runtime)
             implementation(libs.jetbrains.lifecycle.compose)
+
+            implementation(libs.koin.core)
+
+            implementation(libs.jetbrains.compose.navigation)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
