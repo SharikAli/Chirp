@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,7 @@ fun RegisterRoot(
     val snackbarHostState = remember { SnackbarHostState() }
 
     ObserveAsEvents(viewModel.events) { event ->
-        when(event) {
+        when (event) {
             is RegisterEvent.Success -> {
                 onRegisterSuccess(event.email)
             }
@@ -55,13 +56,13 @@ fun RegisterRoot(
     RegisterScreen(
         state = state,
         onAction = { action ->
-            when(action) {
+            when (action) {
                 is RegisterAction.OnLoginClick -> onLoginClick()
                 else -> Unit
             }
             viewModel.onAction(action)
         },
-        snackBarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -69,10 +70,10 @@ fun RegisterRoot(
 fun RegisterScreen(
     state: RegisterState,
     onAction: (RegisterAction) -> Unit,
-    snackBarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState
 ) {
     ChirpSnackbarScaffold(
-        snackbarHostState = snackBarHostState
+        snackbarHostState = snackbarHostState
     ) {
         ChirpAdaptiveFormLayout(
             headerText = stringResource(Res.string.welcome_to_chirp),
@@ -99,7 +100,8 @@ fun RegisterScreen(
                 isError = state.emailError != null,
                 onFocusChanged = { isFocused ->
                     onAction(RegisterAction.OnInputTextFocusGain)
-                }
+                },
+                keyboardType = KeyboardType.Email
             )
             Spacer(modifier = Modifier.height(16.dp))
             ChirpPasswordTextField(
@@ -146,12 +148,12 @@ fun RegisterScreen(
 @PreviewScreenSizes
 @PreviewLightDark
 @Composable
-private fun RegisterScreenPreview() {
+private fun Preview() {
     ChirpTheme {
         RegisterScreen(
             state = RegisterState(),
             onAction = {},
-            snackBarHostState = remember { SnackbarHostState() },
+            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }

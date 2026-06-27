@@ -32,6 +32,7 @@ import com.chatapp.core.designsystem.components.brand.ChirpBrandLogo
 import com.chatapp.core.designsystem.theme.ChirpTheme
 import com.chatapp.core.designsystem.theme.extended
 import com.chatapp.core.presentation.util.DeviceConfiguration
+import com.chatapp.core.presentation.util.clearFocusOnTap
 import com.chatapp.core.presentation.util.currentDeviceConfiguration
 
 @Composable
@@ -43,16 +44,17 @@ fun ChirpAdaptiveFormLayout(
     formContent: @Composable ColumnScope.() -> Unit
 ) {
     val configuration = currentDeviceConfiguration()
-    val headerColor = if (configuration == DeviceConfiguration.MOBILE_LANDSCAPE) {
+    val headerColor = if(configuration == DeviceConfiguration.MOBILE_LANDSCAPE) {
         MaterialTheme.colorScheme.onBackground
     } else {
         MaterialTheme.colorScheme.extended.textPrimary
     }
 
-    when (configuration) {
+    when(configuration) {
         DeviceConfiguration.MOBILE_PORTRAIT -> {
             ChirpSurface(
                 modifier = modifier
+                    .clearFocusOnTap()
                     .consumeWindowInsets(WindowInsets.navigationBars)
                     .consumeWindowInsets(WindowInsets.displayCutout),
                 header = {
@@ -71,7 +73,6 @@ fun ChirpAdaptiveFormLayout(
                 formContent()
             }
         }
-
         DeviceConfiguration.MOBILE_LANDSCAPE -> {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -104,7 +105,6 @@ fun ChirpAdaptiveFormLayout(
                 }
             }
         }
-
         DeviceConfiguration.TABLET_PORTRAIT,
         DeviceConfiguration.TABLET_LANDSCAPE,
         DeviceConfiguration.DESKTOP -> {
@@ -155,7 +155,7 @@ fun ColumnScope.AuthHeaderSection(
     AnimatedVisibility(
         visible = errorText != null
     ) {
-        if (errorText != null) {
+        if(errorText != null) {
             Text(
                 text = errorText,
                 style = MaterialTheme.typography.labelSmall,

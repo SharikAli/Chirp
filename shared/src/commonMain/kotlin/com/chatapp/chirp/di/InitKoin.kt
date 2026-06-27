@@ -1,6 +1,7 @@
 package com.chatapp.chirp.di
 
 import com.chatapp.auth.presentation.di.authPresentationModule
+import com.chatapp.chat.presentation.di.chatPresentationModule
 import com.chatapp.core.data.di.coreDataModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
@@ -10,7 +11,9 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         config?.invoke(this)
         modules(
             coreDataModule,
-            authPresentationModule
+            authPresentationModule,
+            appModule,
+            chatPresentationModule
         )
     }
 }

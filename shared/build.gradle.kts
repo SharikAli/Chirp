@@ -44,7 +44,7 @@ kotlin {
             implementation(libs.jetbrains.compose.runtime)
             implementation(libs.jetbrains.lifecycle.compose)
 
-            implementation(libs.koin.core)
+            implementation(libs.bundles.koin.common)
 
             implementation(libs.jetbrains.compose.navigation)
         }

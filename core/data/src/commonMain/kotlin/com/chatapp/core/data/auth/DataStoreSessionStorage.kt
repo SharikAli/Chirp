@@ -4,6 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.chatapp.core.data.dto.AuthInfoSerializable
+import com.chatapp.core.data.mappers.toDomain
 import com.chatapp.core.data.mappers.toSerializable
 import com.chatapp.core.domain.auth.AuthInfo
 import com.chatapp.core.domain.auth.SessionStorage
@@ -25,7 +27,7 @@ class DataStoreSessionStorage(
         return dataStore.data.map { preferences ->
             val serializedJson = preferences[authInfoKey]
             serializedJson?.let {
-                json.decodeFromString(it)
+                json.decodeFromString<AuthInfoSerializable>(it).toDomain()
             }
         }
     }
