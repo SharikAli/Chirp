@@ -28,14 +28,15 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RegisterSuccessRoot(
-    viewModel: RegisterSuccessViewModel = koinViewModel()
+    viewModel: RegisterSuccessViewModel = koinViewModel(),
+    onLoginClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
     ObserveAsEvents(viewModel.events) { event ->
-        when (event) {
+        when(event) {
             is RegisterSuccessEvent.ResendVerificationEmailSuccess -> {
                 snackbarHostState.showSnackbar(
                     message = getString(
@@ -48,7 +49,13 @@ fun RegisterSuccessRoot(
 
     RegisterSuccessScreen(
         state = state,
-        onAction = viewModel::onAction,
+        onAction = { action ->
+            when(action) {
+                is RegisterSuccessAction.OnLoginClick -> onLoginClick()
+                else -> Unit
+            }
+            viewModel.onAction(action)
+        },
         snackbarHostState = snackbarHostState
     )
 }

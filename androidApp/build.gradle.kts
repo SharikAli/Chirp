@@ -11,6 +11,8 @@ dependencies {
 
     implementation(libs.koin.compose)
 
+    implementation(libs.core.splashscreen)
+
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
 }
