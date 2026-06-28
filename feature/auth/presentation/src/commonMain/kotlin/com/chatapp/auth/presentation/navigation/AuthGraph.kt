@@ -69,6 +69,9 @@ fun NavGraphBuilder.authGraph(
                 navDeepLink {
                     this.uriPattern = "chirp://chirp.pl-coding.com/api/auth/verify?token={token}"
                 },
+                navDeepLink {
+                    this.uriPattern = "http://localhost:8080/api/auth/verify?token={token}"
+                },
             )
         ) {
             EmailVerificationRoot(
@@ -98,6 +101,9 @@ fun NavGraphBuilder.authGraph(
                 },
                 navDeepLink {
                     this.uriPattern = "chirp://chirp.pl-coding.com/api/auth/reset-password?token={token}"
+                },
+                navDeepLink {
+                    this.uriPattern = "http://localhost:8080/api/auth/reset-password?token={token}"
                 },
             )
         ) {

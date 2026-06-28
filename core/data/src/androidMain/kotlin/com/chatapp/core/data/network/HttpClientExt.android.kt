@@ -36,3 +36,7 @@ actual suspend fun <T> platformSafeCall(
         Result.Failure(DataError.Remote.UNKNOWN)
     }
 }
+
+actual fun platformBaseUrl(): String {
+    return UrlConstants.ANDROID_BASE_URL_HTTP
+}

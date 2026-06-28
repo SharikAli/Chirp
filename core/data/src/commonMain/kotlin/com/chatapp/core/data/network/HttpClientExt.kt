@@ -15,6 +15,8 @@ import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 
+expect fun platformBaseUrl(): String
+
 expect suspend fun <T> platformSafeCall(
     execute: suspend () -> HttpResponse,
     handleResponse: suspend (HttpResponse) -> Result<T, DataError.Remote>
@@ -122,9 +124,10 @@ suspend inline fun <reified T> responseToResult(response: HttpResponse): Result<
 }
 
 fun constructRoute(route: String): String {
+    val baseUrl = platformBaseUrl()
     return when {
-        route.contains(UrlConstants.BASE_URL_HTTP) -> route
-        route.startsWith("/") -> "${UrlConstants.BASE_URL_HTTP}$route"
-        else -> "${UrlConstants.BASE_URL_HTTP}/$route"
+        route.contains(baseUrl) -> route
+        route.startsWith("/") -> "${baseUrl}$route"
+        else -> "${baseUrl}/$route"
     }
 }

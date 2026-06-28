@@ -5,6 +5,7 @@
 
     <application
         android:name=".ChirpApplication"
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -39,6 +40,18 @@
 
                 <data android:scheme="chirp" />
                 <data android:host="chirp.coding.com" />
+
+                <data android:pathPrefix="/api/auth/verify" />
+                <data android:pathPrefix="/api/auth/reset-password" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:host="localhost" android:port="8080" />
 
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />

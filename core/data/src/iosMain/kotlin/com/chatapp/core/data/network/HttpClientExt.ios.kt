@@ -62,3 +62,7 @@ private fun handleDarwinException(e: DarwinHttpRequestException): Result<Nothing
         }
     } else Result.Failure(DataError.Remote.UNKNOWN)
 }
+
+actual fun platformBaseUrl(): String {
+    return UrlConstants.IOS_BASE_URL_HTTP
+}
