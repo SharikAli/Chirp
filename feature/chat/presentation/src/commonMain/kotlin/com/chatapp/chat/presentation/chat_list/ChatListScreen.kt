@@ -32,9 +32,11 @@ import chirp.feature.chat.presentation.generated.resources.create_chat
 import chirp.feature.chat.presentation.generated.resources.do_you_want_to_logout
 import chirp.feature.chat.presentation.generated.resources.do_you_want_to_logout_desc
 import chirp.feature.chat.presentation.generated.resources.logout
+import chirp.feature.chat.presentation.generated.resources.no_chats
+import chirp.feature.chat.presentation.generated.resources.no_chats_subtitle
 import com.chatapp.chat.presentation.chat_list.component.ChatListHeader
 import com.chatapp.chat.presentation.chat_list.component.ChatListItemUi
-import com.chatapp.chat.presentation.chat_list.component.EmptyChatSection
+import com.chatapp.chat.presentation.components.EmptyListSection
 import com.chatapp.chat.presentation.model.ChatUi
 import com.chatapp.core.designsystem.components.ChirpFloatingActionButton
 import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
@@ -59,7 +61,7 @@ fun ChatListRoot(
     ChatListScreen(
         state = state,
         onAction = { action ->
-            when(action) {
+            when (action) {
                 is ChatListAction.OnChatClick -> onChatClick(action.chat)
                 ChatListAction.OnConfirmLogout -> onConfirmLogoutClick()
                 ChatListAction.OnCreateChatClick -> onCreateChatClick()
@@ -126,8 +128,11 @@ fun ChatListScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
                 state.chats.isEmpty() -> {
-                    EmptyChatSection(
+                    EmptyListSection(
+                        title = stringResource(Res.string.no_chats),
+                        description = stringResource(Res.string.no_chats_subtitle),
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
@@ -136,6 +141,7 @@ fun ChatListScreen(
                             )
                     )
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -163,7 +169,7 @@ fun ChatListScreen(
         }
     }
 
-    if(state.showLogoutConfirmation) {
+    if (state.showLogoutConfirmation) {
         DestructiveConfirmationDialog(
             title = stringResource(Res.string.do_you_want_to_logout),
             description = stringResource(Res.string.do_you_want_to_logout_desc),
