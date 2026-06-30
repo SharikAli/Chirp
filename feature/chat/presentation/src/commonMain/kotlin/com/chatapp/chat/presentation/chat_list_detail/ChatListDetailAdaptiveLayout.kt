@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chatapp.chat.presentation.chat_detail.ChatDetailRoot
 import com.chatapp.chat.presentation.chat_list.ChatListRoot
 import com.chatapp.chat.presentation.create_chat.CreateChatRoot
+import com.chatapp.chat.presentation.manage_chat.ManageChatRoot
 import com.chatapp.core.designsystem.theme.extended
 import com.chatapp.core.presentation.util.DialogSheetScopedViewModel
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ fun ChatListDetailAdaptiveLayout(
 
     val detailPane = scaffoldNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail]
     LaunchedEffect(detailPane, sharedState.selectedChatId) {
-        if(detailPane == PaneAdaptedValue.Hidden && sharedState.selectedChatId != null) {
+        if (detailPane == PaneAdaptedValue.Hidden && sharedState.selectedChatId != null) {
             chatListDetailViewModel.onAction(ChatListDetailAction.OnChatClick(null))
         }
     }
@@ -83,9 +84,12 @@ fun ChatListDetailAdaptiveLayout(
                 ChatDetailRoot(
                     chatId = sharedState.selectedChatId,
                     isDetailPresent = detailPane == PaneAdaptedValue.Expanded && listPane == PaneAdaptedValue.Expanded,
+                    onChatMembersClick = {
+                        chatListDetailViewModel.onAction(ChatListDetailAction.OnManageChatClick)
+                    },
                     onBack = {
                         scope.launch {
-                            if(scaffoldNavigator.canNavigateBack()) {
+                            if (scaffoldNavigator.canNavigateBack()) {
                                 scaffoldNavigator.navigateBack()
                             }
                         }
@@ -105,6 +109,20 @@ fun ChatListDetailAdaptiveLayout(
                 scope.launch {
                     scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
                 }
+            },
+            onDismiss = {
+                chatListDetailViewModel.onAction(ChatListDetailAction.OnDismissCurrentDialog)
+            }
+        )
+    }
+
+    DialogSheetScopedViewModel(
+        visible = sharedState.dialogState is DialogState.ManageChat
+    ) {
+        ManageChatRoot(
+            chatId = sharedState.selectedChatId,
+            onMembersAdded = {
+                chatListDetailViewModel.onAction(ChatListDetailAction.OnDismissCurrentDialog)
             },
             onDismiss = {
                 chatListDetailViewModel.onAction(ChatListDetailAction.OnDismissCurrentDialog)

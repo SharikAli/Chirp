@@ -6,6 +6,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.chatapp.chat.database.entities.ChatEntity
 import com.chatapp.chat.database.entities.ChatInfoEntity
+import com.chatapp.chat.database.entities.ChatMessageEntity
 import com.chatapp.chat.database.entities.ChatParticipantCrossRef
 import com.chatapp.chat.database.entities.ChatParticipantEntity
 import com.chatapp.chat.database.entities.ChatWithParticipants
@@ -58,7 +59,13 @@ interface ChatDao {
     )
     fun getActiveParticipantsByChatId(chatId: String): Flow<List<ChatParticipantEntity>>
 
-    @Query("SELECT * FROM chatentity WHERE chatId = :chatId")
+    @Query(
+        """
+        SELECT c.*
+        FROM chatentity c
+        WHERE c.chatId = :chatId
+    """
+    )
     @Transaction
     fun getChatInfoById(chatId: String): Flow<ChatInfoEntity?>
 
@@ -87,9 +94,29 @@ interface ChatDao {
     suspend fun upsertChatsWithParticipantsAndCrossRefs(
         chats: List<ChatWithParticipants>,
         participantDao: ChatParticipantDao,
-        crossRefDao: ChatParticipantsCrossRefDao
+        crossRefDao: ChatParticipantsCrossRefDao,
+        messageDao: ChatMessageDao
     ) {
         upsertChats(chats.map { it.chat })
+
+        val serverChatIds = chats.map { it.chat.chatId }
+        val localChatIds = getAllChatIds()
+        val staleChatIds = localChatIds - serverChatIds
+
+        chats.forEach { chat ->
+            chat.lastMessage?.run {
+                messageDao.upsertMessage(
+                    ChatMessageEntity(
+                        messageId = messageId,
+                        chatId = chatId,
+                        senderId = senderId,
+                        content = content,
+                        timestamp = timestamp,
+                        deliveryStatus = deliveryStatus
+                    )
+                )
+            }
+        }
 
         val allParticipants = chats.flatMap { it.participants }
         participantDao.upsertParticipants(allParticipants)
@@ -111,5 +138,7 @@ interface ChatDao {
                 participants = chat.participants
             )
         }
+
+        deleteChatsByIds(staleChatIds)
     }
 }

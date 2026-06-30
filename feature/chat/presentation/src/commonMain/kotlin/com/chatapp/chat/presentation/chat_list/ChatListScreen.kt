@@ -36,7 +36,7 @@ import chirp.feature.chat.presentation.generated.resources.no_chats
 import chirp.feature.chat.presentation.generated.resources.no_chats_subtitle
 import com.chatapp.chat.presentation.chat_list.component.ChatListHeader
 import com.chatapp.chat.presentation.chat_list.component.ChatListItemUi
-import com.chatapp.chat.presentation.components.EmptyListSection
+import com.chatapp.chat.presentation.components.EmptySection
 import com.chatapp.chat.presentation.model.ChatUi
 import com.chatapp.core.designsystem.components.ChirpFloatingActionButton
 import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
@@ -130,7 +130,7 @@ fun ChatListScreen(
                 }
 
                 state.chats.isEmpty() -> {
-                    EmptyListSection(
+                    EmptySection(
                         title = stringResource(Res.string.no_chats),
                         description = stringResource(Res.string.no_chats_subtitle),
                         modifier = Modifier

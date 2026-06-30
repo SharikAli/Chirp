@@ -16,6 +16,8 @@ kotlin {
                 // Add KMP dependencies here
 
                 implementation(projects.core.domain)
+
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
 

@@ -27,6 +27,7 @@ import chirp.feature.chat.presentation.generated.resources.leave_chat
 import chirp.feature.chat.presentation.generated.resources.open_chat_options_menu
 import chirp.feature.chat.presentation.generated.resources.users_icon
 import com.chatapp.chat.domain.models.ChatMessage
+import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.presentation.components.ChatHeader
 import com.chatapp.chat.presentation.components.ChatItemHeaderRow
 import com.chatapp.chat.presentation.model.ChatUi
@@ -47,7 +48,7 @@ fun ChatDetailHeader(
     isDetailPresent: Boolean,
     isChatOptionsDropDownOpen: Boolean,
     onChatOptionsClick: () -> Unit,
-    onDismissChatOptions: ()  -> Unit,
+    onDismissChatOptions: () -> Unit,
     onManageChatClick: () -> Unit,
     onLeaveChatClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -62,7 +63,7 @@ fun ChatDetailHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if(!isDetailPresent) {
+        if (!isDetailPresent) {
             ChirpIconButton(
                 onClick = onBackClick
             ) {
@@ -75,7 +76,7 @@ fun ChatDetailHeader(
             }
         }
 
-        if(chatUi != null) {
+        if (chatUi != null) {
             val isGroupChat = chatUi.otherParticipants.size > 1
             ChatItemHeaderRow(
                 chat = chatUi,
@@ -161,7 +162,8 @@ fun ChatDetailHeaderPreview() {
                             content = "This is a last chat message that was sent by Philipp " +
                                     "and goes over multiple lines to showcase the ellipsis",
                             createdAt = Clock.System.now(),
-                            senderId = "1"
+                            senderId = "1",
+                            deliveryStatus = ChatMessageDeliveryStatus.SENT
                         ),
                         lastMessageSenderUsername = "Philipp"
                     ),
