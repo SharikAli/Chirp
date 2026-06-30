@@ -33,12 +33,12 @@ fun DialogSheetScopedViewModel(
     var owner by remember { mutableStateOf<ViewModelStoreOwner?>(null) }
 
     LaunchedEffect(visible, scopeId) {
-        if (visible && owner == null) {
+        if(visible && owner == null) {
             owner = object : ViewModelStoreOwner {
                 override val viewModelStore: ViewModelStore
                     get() = registry.getOrCreate(scopeId)
             }
-        } else if (!visible && owner != null) {
+        } else if(!visible && owner != null) {
             registry.clear(scopeId)
             owner = null
         }

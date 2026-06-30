@@ -16,9 +16,13 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 // Add KMP dependencies here
 
+                implementation(projects.core.data)
                 implementation(projects.core.domain)
                 implementation(projects.feature.chat.domain)
                 implementation(projects.feature.chat.database)
+
+                implementation(libs.bundles.ktor.common)
+                implementation(libs.koin.core)
             }
         }
 
