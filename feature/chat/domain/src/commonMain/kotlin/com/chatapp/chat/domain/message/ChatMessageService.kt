@@ -2,6 +2,7 @@ package com.chatapp.chat.domain.message
 
 import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.core.domain.util.DataError
+import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 
 interface ChatMessageService {
@@ -9,4 +10,6 @@ interface ChatMessageService {
         chatId: String,
         before: String? = null
     ): Result<List<ChatMessage>, DataError.Remote>
+
+    suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote>
 }

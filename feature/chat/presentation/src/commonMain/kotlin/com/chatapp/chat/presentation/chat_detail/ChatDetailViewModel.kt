@@ -12,6 +12,7 @@ import com.chatapp.chat.domain.message.MessageRepository
 import com.chatapp.chat.domain.models.ConnectionState
 import com.chatapp.chat.domain.models.OutgoingNewMessage
 import com.chatapp.chat.presentation.mappers.toUi
+import com.chatapp.chat.presentation.model.MessageUi
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.onFailure
 import com.chatapp.core.domain.util.onSuccess
@@ -76,7 +77,8 @@ class ChatDetailViewModel(
         }
 
         currentState.copy(
-            chatUi = chatInfo.chat.toUi(authInfo.user.id)
+            chatUi = chatInfo.chat.toUi(authInfo.user.id),
+            messages = chatInfo.messages.map { it.toUi(authInfo.user.id) }
         )
     }
 
@@ -108,14 +110,50 @@ class ChatDetailViewModel(
             ChatDetailAction.OnBackClick -> {}
             ChatDetailAction.OnChatMembersClick -> {}
             ChatDetailAction.OnChatOptionsClick -> onChatOptionsClick()
-            is ChatDetailAction.OnDeleteMessageClick -> {}
+            is ChatDetailAction.OnDeleteMessageClick -> deleteMessage(action.message)
             ChatDetailAction.OnDismissChatOptions -> onDismissChatOptions()
-            ChatDetailAction.OnDismissMessageMenu -> {}
+            ChatDetailAction.OnDismissMessageMenu -> onDismissMessageMenu()
             ChatDetailAction.OnLeaveChatClick -> onLeaveChatClick()
-            is ChatDetailAction.OnMessageLongClick -> {}
-            is ChatDetailAction.OnRetryClick -> {}
+            is ChatDetailAction.OnMessageLongClick -> onMessageLongClick(action.message)
+            is ChatDetailAction.OnRetryClick -> retryMessage(action.message)
             ChatDetailAction.OnScrollToTop -> {}
             ChatDetailAction.OnSendMessageClick -> sendMessage()
+        }
+    }
+
+    private fun onDismissMessageMenu() {
+        _state.update {
+            it.copy(
+                messageWithOpenMenu = null
+            )
+        }
+    }
+
+    private fun onMessageLongClick(message: MessageUi.LocalUserMessage) {
+        _state.update {
+            it.copy(
+                messageWithOpenMenu = message
+            )
+        }
+    }
+
+    private fun deleteMessage(message: MessageUi.LocalUserMessage) {
+        viewModelScope.launch {
+            messageRepository
+                .deleteMessage(message.id)
+                .onFailure { error ->
+                    eventChannel.send(ChatDetailEvent.OnError(error.toUiText()))
+                }
+        }
+    }
+
+    private fun retryMessage(message: MessageUi.LocalUserMessage) {
+        viewModelScope.launch {
+            messageRepository
+                .retryMessage(message.id)
+                .onFailure { error ->
+                    eventChannel.send(ChatDetailEvent.OnError(error.toUiText()))
+                }
         }
     }
 
@@ -132,6 +170,7 @@ class ChatDetailViewModel(
                 messageId = Uuid.random().toString(),
                 content = content
             )
+            println("Message ID sent: ${message.messageId}")
 
             messageRepository
                 .sendMessage(message)
@@ -164,17 +203,6 @@ class ChatDetailViewModel(
                 messageRepository.getMessagesForChat(chatId)
             } else emptyFlow()
         }
-            .combine(sessionStorage.observeAuthInfo()) { messages, authInfo ->
-                if (authInfo == null) {
-                    return@combine messages
-                }
-                _state.update { chatDetailState ->
-                    chatDetailState.copy(
-                        messages = messages.map { it.toUi(authInfo.user.id) }
-                    )
-                }
-                messages
-            }
 
         val isNearBottom = state.map { it.isNearBottom }.distinctUntilChanged()
 

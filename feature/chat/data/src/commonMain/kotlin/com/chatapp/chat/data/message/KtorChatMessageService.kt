@@ -4,15 +4,23 @@ import com.chatapp.chat.data.dto.ChatMessageDto
 import com.chatapp.chat.data.mappers.toDomain
 import com.chatapp.chat.domain.message.ChatMessageService
 import com.chatapp.chat.domain.models.ChatMessage
+import com.chatapp.core.data.network.delete
 import com.chatapp.core.data.network.get
 import com.chatapp.core.domain.util.DataError
+import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 import com.chatapp.core.domain.util.map
 import io.ktor.client.HttpClient
 
 class KtorChatMessageService(
     private val httpClient: HttpClient
-) : ChatMessageService {
+): ChatMessageService {
+
+    override suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote> {
+        return httpClient.delete(
+            route = "/messages/$messageId"
+        )
+    }
 
     override suspend fun fetchMessages(
         chatId: String,
@@ -22,7 +30,7 @@ class KtorChatMessageService(
             route = "/chat/$chatId/messages",
             queryParams = buildMap {
                 this["pageSize"] = ChatMessageConstants.PAGE_SIZE
-                if (before != null) {
+                if(before != null) {
                     this["before"] = before
                 }
             }

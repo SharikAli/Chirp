@@ -54,15 +54,56 @@ class OfflineFirstMessageRepository(
                 .sendMessage(dto.toJsonPayload())
                 .onFailure { _ ->
                     applicationScope.launch {
+                        database.chatMessageDao.updateDeliveryStatus(
+                            messageId = entity.messageId,
+                            timestamp = Clock.System.now().toEpochMilliseconds(),
+                            status = ChatMessageDeliveryStatus.FAILED.name
+                        )
+                    }.join()
+                }
+        }
+    }
+
+    override suspend fun retryMessage(messageId: String): EmptyResult<DataError> {
+        return safeDatabaseUpdate {
+            println("Message ID retry $messageId")
+            val message = database.chatMessageDao.getMessageById(messageId)
+                ?: return Result.Failure(DataError.Local.NOT_FOUND)
+
+            database.chatMessageDao.updateDeliveryStatus(
+                messageId = messageId,
+                timestamp = Clock.System.now().toEpochMilliseconds(),
+                status = ChatMessageDeliveryStatus.SENDING.name
+            )
+
+            val outgoingNewMessage = OutgoingWebSocketDto.NewMessage(
+                chatId = message.chatId,
+                messageId = messageId,
+                content = message.content
+            )
+            return webSocketConnector
+                .sendMessage(outgoingNewMessage.toJsonPayload())
+                .onFailure {
+                    applicationScope.launch {
                         database.chatMessageDao.upsertMessage(
-                            dto.toEntity(
-                                senderId = localUser.id,
-                                deliveryStatus = ChatMessageDeliveryStatus.FAILED
+                            message.copy(
+                                deliveryStatus = ChatMessageDeliveryStatus.FAILED.name,
+                                timestamp = Clock.System.now().toEpochMilliseconds()
                             )
                         )
                     }.join()
                 }
         }
+    }
+
+    override suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote> {
+        return chatMessageService
+            .deleteMessage(messageId)
+            .onSuccess {
+                applicationScope.launch {
+                    database.chatMessageDao.deleteMessageById(messageId)
+                }.join()
+            }
     }
 
     override suspend fun updateMessageDeliveryStatus(
