@@ -35,7 +35,7 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun MessageBox(
     messageTextFieldState: TextFieldState,
-    isTextInputEnabled: Boolean,
+    isSendButtonEnabled: Boolean,
     connectionState: ConnectionState,
     onSendClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -45,14 +45,13 @@ fun MessageBox(
         state = messageTextFieldState,
         modifier = modifier,
         placeholder = stringResource(Res.string.send_a_message),
-        enabled = isTextInputEnabled,
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Send
         ),
         onKeyboardAction = onSendClick,
         bottomContent = {
             Spacer(modifier = Modifier.weight(1f))
-            if (!isConnected) {
+            if(!isConnected) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -73,7 +72,7 @@ fun MessageBox(
             ChirpButton(
                 text = stringResource(Res.string.send),
                 onClick = onSendClick,
-                enabled = isConnected && isTextInputEnabled
+                enabled = isConnected && isSendButtonEnabled
             )
         }
     )
@@ -91,7 +90,7 @@ fun MessageBoxPreview() {
         ) {
             MessageBox(
                 messageTextFieldState = rememberTextFieldState(),
-                isTextInputEnabled = true,
+                isSendButtonEnabled = true,
                 connectionState = ConnectionState.CONNECTED,
                 onSendClick = {},
                 modifier = Modifier

@@ -4,11 +4,11 @@ package com.chatapp.chat.data.network
 
 import com.chatapp.chat.data.dto.websocket.WebSocketMessageDto
 import com.chatapp.chat.data.lifecycle.AppLifecycleObserver
-import com.chatapp.chat.domain.error.ConnectionError
 import com.chatapp.chat.domain.models.ConnectionState
 import com.chatapp.core.data.network.platformWebSocketBaseUrl
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.logging.ChirpLogger
+import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 import com.chatapp.feature.chat.data.BuildKonfig
@@ -215,11 +215,11 @@ class KtorWebSocketConnector(
         }
     }
 
-    suspend fun sendMessage(message: String): EmptyResult<ConnectionError> {
+    suspend fun sendMessage(message: String): EmptyResult<DataError.Connection> {
         val connectionState = connectionState.value
 
         if (currentSession == null || connectionState != ConnectionState.CONNECTED) {
-            return Result.Failure(ConnectionError.NOT_CONNECTED)
+            return Result.Failure(DataError.Connection.NOT_CONNECTED)
         }
 
         return try {
@@ -228,7 +228,7 @@ class KtorWebSocketConnector(
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
             logger.error("Unable to send WebSocket message", e)
-            Result.Failure(ConnectionError.MESSAGE_SEND_FAILED)
+            Result.Failure(DataError.Connection.MESSAGE_SEND_FAILED)
         }
     }
 }

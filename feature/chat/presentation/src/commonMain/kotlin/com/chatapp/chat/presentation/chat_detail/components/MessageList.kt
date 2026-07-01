@@ -29,7 +29,7 @@ fun MessageList(
     onDeleteMessageClick: (MessageUi.LocalUserMessage) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (messages.isEmpty()) {
+    if(messages.isEmpty()) {
         Box(
             modifier = modifier
                 .padding(vertical = 32.dp),
@@ -50,7 +50,6 @@ fun MessageList(
         ) {
             items(
                 items = messages,
-                key = { it.id }
             ) { message ->
                 MessageListItemUi(
                     messageUi = message,
@@ -60,7 +59,6 @@ fun MessageList(
                     onRetryClick = onMessageRetryClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem()
                 )
             }
         }

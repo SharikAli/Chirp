@@ -43,9 +43,7 @@ fun LocalUserMessage(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
     ) {
-        Box(
-            modifier = Modifier.weight(1f)
-        ) {
+        Box {
             ChirpChatBubble(
                 messageContent = message.content,
                 sender = stringResource(Res.string.you),
@@ -75,7 +73,7 @@ fun LocalUserMessage(
             )
         }
 
-        if (message.deliveryStatus == ChatMessageDeliveryStatus.FAILED) {
+        if(message.deliveryStatus == ChatMessageDeliveryStatus.FAILED) {
             IconButton(
                 onClick = onRetryClick
             ) {

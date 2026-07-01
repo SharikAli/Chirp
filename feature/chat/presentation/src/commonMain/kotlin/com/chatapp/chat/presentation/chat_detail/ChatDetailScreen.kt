@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -25,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -54,9 +53,12 @@ import com.chatapp.core.presentation.util.ObserveAsEvents
 import com.chatapp.core.presentation.util.UiText
 import com.chatapp.core.presentation.util.clearFocusOnTap
 import com.chatapp.core.presentation.util.currentDeviceConfiguration
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -74,6 +76,10 @@ fun ChatDetailRoot(
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             ChatDetailEvent.OnChatLeft -> onBack()
+            ChatDetailEvent.OnNewMessage -> {
+                // TODO: Auto scroll to bottom
+            }
+
             is ChatDetailEvent.OnError -> {
                 snackbarState.showSnackbar(event.error.asStringAsync())
             }
@@ -84,10 +90,16 @@ fun ChatDetailRoot(
         viewModel.onAction(ChatDetailAction.OnSelectChat(chatId))
     }
 
+    val scope = rememberCoroutineScope()
     BackHandler(
         enabled = !isDetailPresent
     ) {
-        viewModel.onAction(ChatDetailAction.OnSelectChat(null))
+        scope.launch {
+            // Add artificial delay to prevent detail back animation from showing
+            // an unselected chat the moment we go back
+            delay(300.milliseconds)
+            viewModel.onAction(ChatDetailAction.OnSelectChat(null))
+        }
         onBack()
     }
 
@@ -118,7 +130,6 @@ fun ChatDetailScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
-        contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = if (!configuration.isWideScreen) {
             MaterialTheme.colorScheme.surface
         } else {
@@ -203,7 +214,7 @@ fun ChatDetailScreen(
                         ) {
                             MessageBox(
                                 messageTextFieldState = state.messageTextFieldState,
-                                isTextInputEnabled = state.canSendMessage,
+                                isSendButtonEnabled = state.canSendMessage,
                                 connectionState = state.connectionState,
                                 onSendClick = {
                                     onAction(ChatDetailAction.OnSendMessageClick)
@@ -231,7 +242,7 @@ fun ChatDetailScreen(
                     ) {
                         MessageBox(
                             messageTextFieldState = state.messageTextFieldState,
-                            isTextInputEnabled = state.canSendMessage,
+                            isSendButtonEnabled = state.canSendMessage,
                             connectionState = state.connectionState,
                             onSendClick = {
                                 onAction(ChatDetailAction.OnSendMessageClick)
