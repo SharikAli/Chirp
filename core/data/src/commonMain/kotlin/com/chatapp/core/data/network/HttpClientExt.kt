@@ -16,6 +16,7 @@ import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 
 expect fun platformBaseUrl(): String
+expect fun platformWebSocketBaseUrl(): String
 
 expect suspend fun <T> platformSafeCall(
     execute: suspend () -> HttpResponse,

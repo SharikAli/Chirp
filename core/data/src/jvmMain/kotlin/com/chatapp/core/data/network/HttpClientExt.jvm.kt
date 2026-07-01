@@ -11,3 +11,11 @@ actual suspend fun <T> platformSafeCall(
     // TODO: Implement this later.
     return Result.Failure(DataError.Remote.UNKNOWN)
 }
+
+actual fun platformBaseUrl(): String {
+    return UrlConstants.IOS_BASE_URL_HTTP
+}
+
+actual fun platformWebSocketBaseUrl(): String {
+    return UrlConstants.IOS_BASE_URL_WS
+}

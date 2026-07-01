@@ -66,3 +66,7 @@ private fun handleDarwinException(e: DarwinHttpRequestException): Result<Nothing
 actual fun platformBaseUrl(): String {
     return UrlConstants.IOS_BASE_URL_HTTP
 }
+
+actual fun platformWebSocketBaseUrl(): String {
+    return UrlConstants.IOS_BASE_URL_WS
+}

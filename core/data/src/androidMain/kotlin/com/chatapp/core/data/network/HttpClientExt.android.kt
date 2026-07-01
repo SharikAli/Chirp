@@ -40,3 +40,7 @@ actual suspend fun <T> platformSafeCall(
 actual fun platformBaseUrl(): String {
     return UrlConstants.ANDROID_BASE_URL_HTTP
 }
+
+actual fun platformWebSocketBaseUrl(): String {
+    return UrlConstants.ANDROID_BASE_URL_WS
+}
