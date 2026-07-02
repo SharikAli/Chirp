@@ -21,18 +21,16 @@ fun App(
     viewModel: MainViewModel = koinViewModel()
 ) {
     val navController = rememberNavController()
-    DeepLinkListener(navController)
-
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isCheckingAuth) {
-        if(!state.isCheckingAuth) {
+        if (!state.isCheckingAuth) {
             onAuthenticationChecked()
         }
     }
 
     ObserveAsEvents(viewModel.events) { event ->
-        when(event) {
+        when (event) {
             is MainEvent.OnSessionExpired -> {
                 navController.navigate(AuthGraphRoutes.Graph) {
                     popUpTo(AuthGraphRoutes.Graph) {
@@ -44,15 +42,16 @@ fun App(
     }
 
     ChirpTheme {
-        if(!state.isCheckingAuth) {
+        if (!state.isCheckingAuth) {
             NavigationRoot(
                 navController = navController,
-                startDestination = if(state.isLoggedIn) {
+                startDestination = if (state.isLoggedIn) {
                     ChatGraphRoutes.Graph
                 } else {
                     AuthGraphRoutes.Graph
                 }
             )
+            DeepLinkListener(navController)
         }
     }
 }

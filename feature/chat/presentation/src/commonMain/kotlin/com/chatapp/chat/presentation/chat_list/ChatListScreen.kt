@@ -24,7 +24,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import chirp.feature.chat.presentation.generated.resources.Res
@@ -43,6 +44,8 @@ import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
 import com.chatapp.core.designsystem.components.dialogs.DestructiveConfirmationDialog
 import com.chatapp.core.designsystem.theme.ChirpTheme
 import com.chatapp.core.designsystem.theme.extended
+import com.chatapp.core.presentation.permissions.Permission
+import com.chatapp.core.presentation.permissions.rememberPermissionController
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -85,6 +88,11 @@ fun ChatListScreen(
     onAction: (ChatListAction) -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
+    val permissionController = rememberPermissionController()
+    LaunchedEffect(true) {
+        permissionController.requestPermission(Permission.NOTIFICATIONS)
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -193,7 +201,8 @@ fun ChatListScreen(
     }
 }
 
-@Preview
+@PreviewScreenSizes
+@PreviewLightDark
 @Composable
 private fun Preview() {
     ChirpTheme {

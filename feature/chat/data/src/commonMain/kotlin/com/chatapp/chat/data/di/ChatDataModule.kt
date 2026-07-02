@@ -8,6 +8,7 @@ import com.chatapp.chat.data.message.KtorChatMessageService
 import com.chatapp.chat.data.message.OfflineFirstMessageRepository
 import com.chatapp.chat.data.network.ConnectionRetryHandler
 import com.chatapp.chat.data.network.KtorWebSocketConnector
+import com.chatapp.chat.data.notification.KtorDeviceTokenService
 import com.chatapp.chat.data.participant.KtorChatParticipantService
 import com.chatapp.chat.data.participant.OfflineFirstChatParticipantRepository
 import com.chatapp.chat.database.DatabaseFactory
@@ -16,6 +17,7 @@ import com.chatapp.chat.domain.chat.ChatRepository
 import com.chatapp.chat.domain.chat.ChatService
 import com.chatapp.chat.domain.message.ChatMessageService
 import com.chatapp.chat.domain.message.MessageRepository
+import com.chatapp.chat.domain.notification.DeviceTokenService
 import com.chatapp.chat.domain.participant.ChatParticipantRepository
 import com.chatapp.chat.domain.participant.ChatParticipantService
 import kotlinx.serialization.json.Json
@@ -37,6 +39,7 @@ val chatDataModule = module {
     singleOf(::ConnectionRetryHandler)
     singleOf(::KtorWebSocketConnector)
     singleOf(::KtorChatMessageService) bind ChatMessageService::class
+    singleOf(::KtorDeviceTokenService) bind DeviceTokenService::class
     singleOf(::OfflineFirstChatParticipantRepository) bind ChatParticipantRepository::class
     single {
         Json {

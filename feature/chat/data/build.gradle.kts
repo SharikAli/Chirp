@@ -32,6 +32,9 @@ kotlin {
             dependencies {
                 implementation(libs.koin.compose)
                 implementation(libs.androidx.lifecycle.process)
+
+                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation(libs.firebase.messaging)
             }
         }
 
