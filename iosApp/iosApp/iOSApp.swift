@@ -4,6 +4,8 @@ import Shared
 @main
 struct iOSApp: App {
     
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
     init() {
         InitKoinKt.doInitKoin()
     }
