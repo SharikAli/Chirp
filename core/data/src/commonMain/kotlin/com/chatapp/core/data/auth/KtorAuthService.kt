@@ -4,6 +4,7 @@ import com.chatapp.core.data.dto.AuthInfoSerializable
 import com.chatapp.core.data.dto.requests.ChangePasswordRequest
 import com.chatapp.core.data.dto.requests.EmailRequest
 import com.chatapp.core.data.dto.requests.LoginRequest
+import com.chatapp.core.data.dto.requests.RefreshRequest
 import com.chatapp.core.data.dto.requests.RegisterRequest
 import com.chatapp.core.data.dto.requests.ResetPasswordRequest
 import com.chatapp.core.data.mappers.toDomain
@@ -15,11 +16,14 @@ import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 import com.chatapp.core.domain.util.map
+import com.chatapp.core.domain.util.onSuccess
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.auth.authProvider
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 
 class KtorAuthService(
     private val httpClient: HttpClient
-): AuthService {
+) : AuthService {
 
     override suspend fun login(
         email: String,
@@ -96,5 +100,14 @@ class KtorAuthService(
                 newPassword = newPassword
             )
         )
+    }
+
+    override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> {
+        return httpClient.post<RefreshRequest, Unit>(
+            route = "/auth/logout",
+            body = RefreshRequest(refreshToken)
+        ).onSuccess {
+            httpClient.authProvider<BearerAuthProvider>()?.clearToken()
+        }
     }
 }

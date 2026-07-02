@@ -5,7 +5,6 @@ import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 
 interface AuthService {
-
     suspend fun login(
         email: String,
         password: String
@@ -29,4 +28,6 @@ interface AuthService {
         currentPassword: String,
         newPassword: String
     ): EmptyResult<DataError.Remote>
+
+    suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote>
 }

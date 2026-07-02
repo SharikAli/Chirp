@@ -28,7 +28,7 @@ import kotlin.collections.map
 
 class OfflineFirstChatRepository(
     private val chatService: ChatService,
-    private val db: ChirpChatDatabase
+    private val db: ChirpChatDatabase,
 ) : ChatRepository {
 
     override fun getChats(): Flow<List<Chat>> {
@@ -145,6 +145,10 @@ class OfflineFirstChatRepository(
                     crossRefDao = db.chatParticipantsCrossRefDao
                 )
             }
+    }
+
+    override suspend fun deleteAllChats() {
+        db.chatDao.deleteAllChats()
     }
 
     private suspend fun List<ChatParticipantEntity>.onlyActive(chatId: String): List<ChatParticipantEntity> {

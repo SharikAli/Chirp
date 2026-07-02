@@ -42,7 +42,7 @@ fun ChatListDetailAdaptiveLayout(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(initialChatId) {
-        if (initialChatId != null) {
+        if(initialChatId != null) {
             chatListDetailViewModel.onAction(ChatListDetailAction.OnSelectChat(initialChatId))
             scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
         }
@@ -57,7 +57,7 @@ fun ChatListDetailAdaptiveLayout(
 
     val detailPane = scaffoldNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail]
     LaunchedEffect(detailPane, sharedState.selectedChatId) {
-        if (detailPane == PaneAdaptedValue.Hidden && sharedState.selectedChatId != null) {
+        if(detailPane == PaneAdaptedValue.Hidden && sharedState.selectedChatId != null) {
             chatListDetailViewModel.onAction(ChatListDetailAction.OnSelectChat(null))
         }
     }
@@ -79,7 +79,7 @@ fun ChatListDetailAdaptiveLayout(
                             )
                         }
                     },
-                    onConfirmLogoutClick = onLogout,
+                    onSuccessfulLogout = onLogout,
                     onCreateChatClick = {
                         chatListDetailViewModel.onAction(ChatListDetailAction.OnCreateChatClick)
                     },
@@ -100,7 +100,7 @@ fun ChatListDetailAdaptiveLayout(
                     },
                     onBack = {
                         scope.launch {
-                            if (scaffoldNavigator.canNavigateBack()) {
+                            if(scaffoldNavigator.canNavigateBack()) {
                                 scaffoldNavigator.navigateBack()
                             }
                         }

@@ -18,7 +18,8 @@ sealed interface ChatGraphRoutes {
 }
 
 fun NavGraphBuilder.chatGraph(
-    navController: NavController
+    navController: NavController,
+    onLogout: () -> Unit
 ) {
     navigation<ChatGraphRoutes.Graph>(
         startDestination = ChatGraphRoutes.ChatListDetailRoute(null)
@@ -26,16 +27,14 @@ fun NavGraphBuilder.chatGraph(
         composable<ChatGraphRoutes.ChatListDetailRoute>(
             deepLinks = listOf(
                 navDeepLink {
-                    uriPattern = "http://chat_detail/{chatId}"
+                    uriPattern = "chirp://chat_detail/{chatId}"
                 }
             )
         ) { backStackEntry ->
             val route = backStackEntry.toRoute<ChatGraphRoutes.ChatListDetailRoute>()
             ChatListDetailAdaptiveLayout(
                 initialChatId = route.chatId,
-                onLogout = {
-                    // TODO: Logout user
-                }
+                onLogout = onLogout
             )
         }
     }

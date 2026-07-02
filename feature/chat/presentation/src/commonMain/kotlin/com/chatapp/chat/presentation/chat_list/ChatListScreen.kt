@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -46,6 +47,8 @@ import com.chatapp.core.designsystem.theme.ChirpTheme
 import com.chatapp.core.designsystem.theme.extended
 import com.chatapp.core.presentation.permissions.Permission
 import com.chatapp.core.presentation.permissions.rememberPermissionController
+import com.chatapp.core.presentation.util.ObserveAsEvents
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -53,7 +56,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ChatListRoot(
     selectedChatId: String?,
     onChatClick: (String?) -> Unit,
-    onConfirmLogoutClick: () -> Unit,
+    onSuccessfulLogout: () -> Unit,
     onCreateChatClick: () -> Unit,
     onProfileSettingsClick: () -> Unit,
     viewModel: ChatListViewModel = koinViewModel()
@@ -66,12 +69,26 @@ fun ChatListRoot(
         viewModel.onAction(ChatListAction.OnSelectChat(selectedChatId))
     }
 
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is ChatListEvent.OnLogoutError -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = event.error.asStringAsync()
+                    )
+                }
+            }
+
+            ChatListEvent.OnLogoutSuccess -> onSuccessfulLogout()
+        }
+    }
+
     ChatListScreen(
         state = state,
         onAction = { action ->
             when (action) {
                 is ChatListAction.OnSelectChat -> onChatClick(action.chatId)
-                ChatListAction.OnConfirmLogout -> onConfirmLogoutClick()
                 ChatListAction.OnCreateChatClick -> onCreateChatClick()
                 ChatListAction.OnProfileSettingsClick -> onProfileSettingsClick()
                 else -> Unit
@@ -200,6 +217,7 @@ fun ChatListScreen(
         )
     }
 }
+
 
 @PreviewScreenSizes
 @PreviewLightDark
