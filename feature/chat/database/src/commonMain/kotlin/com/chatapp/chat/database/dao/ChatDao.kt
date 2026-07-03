@@ -24,7 +24,16 @@ interface ChatDao {
     @Query("DELETE FROM chatentity WHERE chatId = :chatId")
     suspend fun deleteChatById(chatId: String)
 
-    @Query("SELECT * FROM chatentity ORDER BY lastActivityAt DESC")
+    @Query("""
+        SELECT c.*
+        FROM chatentity c
+        LEFT JOIN (
+            SELECT chatId, MAX(timestamp) as latest_message_time
+            FROM chatmessageentity
+            GROUP BY chatId
+        ) lm ON c.chatId = lm.chatId
+        ORDER BY COALESCE(lm.latest_message_time, c.lastActivityAt) DESC
+    """)
     @Transaction
     fun getChatsWithParticipants(): Flow<List<ChatWithParticipants>>
 
@@ -48,24 +57,20 @@ interface ChatDao {
     @Query("SELECT COUNT(*) FROM chatentity")
     fun getChatCount(): Flow<Int>
 
-    @Query(
-        """
+    @Query("""
         SELECT p.*
         FROM chatparticipantentity p
         JOIN chatparticipantcrossref cpcr ON p.userId = cpcr.userId
         WHERE cpcr.chatId = :chatId AND cpcr.isActive = true
         ORDER BY p.username
-    """
-    )
+    """)
     fun getActiveParticipantsByChatId(chatId: String): Flow<List<ChatParticipantEntity>>
 
-    @Query(
-        """
+    @Query("""
         SELECT c.*
         FROM chatentity c
         WHERE c.chatId = :chatId
-    """
-    )
+    """)
     @Transaction
     fun getChatInfoById(chatId: String): Flow<ChatInfoEntity?>
 

@@ -50,7 +50,7 @@ fun ChatListItemUi(
         modifier = modifier
             .height(IntrinsicSize.Min)
             .background(
-                color = if(isSelected) {
+                color = if (isSelected) {
                     MaterialTheme.colorScheme.surface
                 } else {
                     MaterialTheme.colorScheme.extended.surfaceLower
@@ -79,7 +79,7 @@ fun ChatListItemUi(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = if(!isGroupChat) {
+                        text = if (!isGroupChat) {
                             chat.otherParticipants.first().username
                         } else {
                             stringResource(Res.string.group_chat)
@@ -90,7 +90,7 @@ fun ChatListItemUi(
                         maxLines = 1,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    if(isGroupChat) {
+                    if (isGroupChat) {
                         val you = stringResource(Res.string.you)
                         val formattedUsernames = remember(chat.otherParticipants) {
                             "$you, " + chat.otherParticipants.joinToString {
@@ -117,7 +117,9 @@ fun ChatListItemUi(
                             color = MaterialTheme.colorScheme.extended.textSecondary,
                         )
                     ) {
-                        append(chat.lastMessageSenderUsername + ":")
+                        if (chat.lastMessageSenderUsername != null) {
+                            append(chat.lastMessageSenderUsername + ": ")
+                        }
                     }
                     append(chat.lastMessage.content)
                 }
@@ -132,7 +134,7 @@ fun ChatListItemUi(
         }
         Box(
             modifier = Modifier
-                .alpha(if(isSelected) 1f else 0f)
+                .alpha(if (isSelected) 1f else 0f)
                 .background(MaterialTheme.colorScheme.primary)
                 .width(4.dp)
                 .fillMaxHeight()
