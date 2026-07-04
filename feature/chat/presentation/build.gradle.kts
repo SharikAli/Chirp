@@ -1,61 +1,8 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.android.lint)
+    alias(libs.plugins.convention.cmp.feature)
 }
 
 kotlin {
-
-    // Target declarations - add or remove as needed below. These define
-    // which platforms this KMP module supports.
-    // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
-    android {
-        namespace = "com.chatapp.chat.presentation"
-        compileSdk {
-            version = release(36) {
-                minorApiLevel = 1
-            }
-        }
-        minSdk = 27
-
-        withHostTestBuilder {
-        }
-
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }.configure {
-            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
-    }
-
-    // For iOS targets, this is also where you should
-    // configure native binary output. For more information, see:
-    // https://kotlinlang.org/docs/multiplatform-build-native-binaries.html#build-xcframeworks
-
-    // A step-by-step guide on how to include this library in an XCode
-    // project can be found here:
-    // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "feature:chat:presentationKit"
-
-    iosX64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosSimulatorArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    jvm()
 
     // Source set declarations.
     // Declaring a target automatically creates a source set with the same name. By default, the
@@ -69,8 +16,18 @@ kotlin {
                 // Add KMP dependencies here
 
                 implementation(projects.core.domain)
+                implementation(projects.core.presentation)
                 implementation(projects.core.designsystem)
                 implementation(projects.feature.chat.domain)
+
+                implementation(libs.material3.adaptive)
+                implementation(libs.material3.adaptive.layout)
+                implementation(libs.material3.adaptive.navigation)
+                implementation(libs.jetbrains.compose.backhandler)
+                implementation(libs.kotlinx.datetime)
+
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.uiToolingPreview)
             }
         }
 

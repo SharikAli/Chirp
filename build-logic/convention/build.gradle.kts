@@ -11,6 +11,10 @@ dependencies {
     compileOnly(libs.android.tools.common)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
+    compileOnly(libs.ksp.gradlePlugin)
+    compileOnly(libs.androidx.room.gradle.plugin)
+    implementation(libs.buildkonfig.gradlePlugin)
+    implementation(libs.buildkonfig.compiler)
 }
 
 java {
@@ -36,6 +40,34 @@ gradlePlugin {
         register("androidApplication") {
             id = "com.chatapp.convention.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
+        }
+        register("androidComposeApplication") {
+            id = "com.chatapp.convention.android.application.compose"
+            implementationClass = "AndroidApplicationComposeConventionPlugin"
+        }
+        register("cmpApplication") {
+            id = "com.chatapp.convention.cmp.application"
+            implementationClass = "CmpApplicationConventionPlugin"
+        }
+        register("kmpLibrary") {
+            id = "com.chatapp.convention.kmp.library"
+            implementationClass = "KmpLibraryConventionPlugin"
+        }
+        register("cmpLibrary") {
+            id = "com.chatapp.convention.cmp.library"
+            implementationClass = "CmpLibraryConventionPlugin"
+        }
+        register("cmpFeature") {
+            id = "com.chatapp.convention.cmp.feature"
+            implementationClass = "CmpFeatureConventionPlugin"
+        }
+        register("buildKonfig") {
+            id = "com.chatapp.convention.buildkonfig"
+            implementationClass = "BuildKonfigConventionPlugin"
+        }
+        register("room") {
+            id = "com.chatapp.convention.room"
+            implementationClass = "RoomConventionPlugin"
         }
     }
 }

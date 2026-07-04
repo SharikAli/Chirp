@@ -1,61 +1,11 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.android.lint)
+    alias(libs.plugins.convention.kmp.library)
+    alias(libs.plugins.convention.buildkonfig)
 }
 
 kotlin {
-
-    // Target declarations - add or remove as needed below. These define
-    // which platforms this KMP module supports.
-    // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
-    android {
-        namespace = "com.chatapp.chat.data"
-        compileSdk {
-            version = release(36) {
-                minorApiLevel = 1
-            }
-        }
-        minSdk = 27
-
-        withHostTestBuilder {
-        }
-
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }.configure {
-            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
-    }
-
-    // For iOS targets, this is also where you should
-    // configure native binary output. For more information, see:
-    // https://kotlinlang.org/docs/multiplatform-build-native-binaries.html#build-xcframeworks
-
-    // A step-by-step guide on how to include this library in an XCode
-    // project can be found here:
-    // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "feature:chat:dataKit"
-
-    iosX64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosSimulatorArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    jvm()
 
     // Source set declarations.
     // Declaring a target automatically creates a source set with the same name. By default, the
@@ -68,17 +18,23 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 // Add KMP dependencies here
 
+                implementation(projects.core.data)
                 implementation(projects.core.domain)
                 implementation(projects.feature.chat.domain)
                 implementation(projects.feature.chat.database)
+
+                implementation(libs.bundles.ktor.common)
+                implementation(libs.koin.core)
             }
         }
 
         androidMain {
             dependencies {
-                // Add Android-specific dependencies here. Note that this source set depends on
-                // commonMain by default and will correctly pull the Android artifacts of any KMP
-                // dependencies declared in commonMain.
+                implementation(libs.koin.compose)
+                implementation(libs.androidx.lifecycle.process)
+
+                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation(libs.firebase.messaging)
             }
         }
 
@@ -95,6 +51,16 @@ kotlin {
         jvmMain {
             dependencies {
 
+            }
+        }
+    }
+
+    targets.withType<KotlinNativeTarget> {
+        compilations.getByName("main") {
+            cinterops {
+                create("network") {
+                    defFile(file("src/nativeInterop/cinterop/network.def"))
+                }
             }
         }
     }
