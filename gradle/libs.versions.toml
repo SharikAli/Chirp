@@ -24,6 +24,7 @@ compose-lifecycle = "2.10.0"
 navigation-compose = "2.9.2"
 jetbrains-core-bundle = "1.0.1"
 material-icons = "1.7.3"
+navigation-event-compose = "1.1.0"
 
 # AndroidX
 androidx-activity = "1.13.0"
@@ -128,6 +129,7 @@ material3-adaptive-navigation = { module = "org.jetbrains.compose.material3.adap
 # Room
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigation-event-compose" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 
 # Firebase

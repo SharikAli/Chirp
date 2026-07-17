@@ -27,7 +27,7 @@ fun NavGraphBuilder.chatGraph(
         composable<ChatGraphRoutes.ChatListDetailRoute>(
             deepLinks = listOf(
                 navDeepLink {
-                    uriPattern = "chirp://chat_detail/{chatId}"
+                    uriPattern = "http://chat_detail/{chatId}"
                 }
             )
         ) { backStackEntry ->

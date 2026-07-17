@@ -24,6 +24,7 @@ kotlin {
                 implementation(libs.material3.adaptive.layout)
                 implementation(libs.material3.adaptive.navigation)
                 implementation(libs.jetbrains.compose.backhandler)
+                implementation(libs.navigationevent.compose)
                 implementation(libs.kotlinx.datetime)
 
                 implementation(libs.compose.components.resources)

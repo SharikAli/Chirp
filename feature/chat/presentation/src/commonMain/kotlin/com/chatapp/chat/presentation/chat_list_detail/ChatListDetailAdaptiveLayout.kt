@@ -18,6 +18,11 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventHandler
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.NavigationEventHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.chatapp.chat.presentation.chat_detail.ChatDetailRoot
 import com.chatapp.chat.presentation.chat_list.ChatListRoot
 import com.chatapp.chat.presentation.create_chat.CreateChatRoot
@@ -48,12 +53,22 @@ fun ChatListDetailAdaptiveLayout(
         }
     }
 
-    BackHandler(enabled = scaffoldNavigator.canNavigateBack()) {
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = scaffoldNavigator.canNavigateBack()
+    ) {
         scope.launch {
             scaffoldNavigator.navigateBack()
             chatListDetailViewModel.onAction(ChatListDetailAction.OnSelectChat(null))
         }
     }
+
+//    BackHandler(enabled = scaffoldNavigator.canNavigateBack()) {
+//        scope.launch {
+//            scaffoldNavigator.navigateBack()
+//            chatListDetailViewModel.onAction(ChatListDetailAction.OnSelectChat(null))
+//        }
+//    }
 
     val detailPane = scaffoldNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail]
     LaunchedEffect(detailPane, sharedState.selectedChatId) {
