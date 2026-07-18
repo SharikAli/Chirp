@@ -1,6 +1,7 @@
 package com.chatapp.chat.presentation.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -20,6 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -43,8 +47,10 @@ import chirp.feature.chat.presentation.generated.resources.profile_image
 import chirp.feature.chat.presentation.generated.resources.save
 import chirp.feature.chat.presentation.generated.resources.upload_icon
 import chirp.feature.chat.presentation.generated.resources.upload_image
+import com.chatapp.chat.presentation.profile.components.DragAndDropOverlay
 import com.chatapp.chat.presentation.profile.components.ProfileHeaderSection
 import com.chatapp.chat.presentation.profile.components.ProfileSectionLayout
+import com.chatapp.chat.presentation.profile.mediapicker.rememberDragAndDropTarget
 import com.chatapp.chat.presentation.profile.mediapicker.rememberImagePickerLauncher
 import com.chatapp.core.designsystem.components.ChirpButton
 import com.chatapp.core.designsystem.components.ChirpButtonStyle
@@ -72,12 +78,10 @@ fun ProfileRoot(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val launcher = rememberImagePickerLauncher { pickedImageData ->
-        viewModel.onAction(
-            ProfileAction.OnPictureSelected(
-                pickedImageData.bytes,
-                pickedImageData.mimeType
-            )
-        )
+        viewModel.onAction(ProfileAction.OnPictureSelected(
+            pickedImageData.bytes,
+            pickedImageData.mimeType
+        ))
     }
 
     ChirpAdaptiveDialogSheetLayout(
@@ -86,12 +90,11 @@ fun ProfileRoot(
         ProfileScreen(
             state = state,
             onAction = { action ->
-                when (action) {
+                when(action) {
                     is ProfileAction.OnDismiss -> onDismiss()
                     is ProfileAction.OnUploadPictureClick -> {
                         launcher.launch()
                     }
-
                     else -> Unit
                 }
                 viewModel.onAction(action)
@@ -105,6 +108,21 @@ fun ProfileScreen(
     state: ProfileState,
     onAction: (ProfileAction) -> Unit,
 ) {
+    var isHoveringWithFile by remember {
+        mutableStateOf(false)
+    }
+    val dragAndDropTarget = rememberDragAndDropTarget(
+        onHover = { isHovered ->
+            isHoveringWithFile = isHovered
+        },
+        onDrop = { imageData ->
+            onAction(ProfileAction.OnPictureSelected(
+                bytes = imageData.bytes,
+                mimeType = imageData.mimeType
+            ))
+        }
+    )
+
     Column(
         modifier = Modifier
             .clearFocusOnTap()
@@ -114,6 +132,10 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(16.dp)
             )
             .verticalScroll(rememberScrollState())
+            .dragAndDropTarget(
+                shouldStartDragAndDrop = { true },
+                target = dragAndDropTarget
+            )
     ) {
         ProfileHeaderSection(
             username = state.username,
@@ -182,7 +204,7 @@ fun ProfileScreen(
                 }
             }
 
-            if (state.imageError != null) {
+            if(state.imageError != null) {
                 Text(
                     text = state.imageError.asString(),
                     style = MaterialTheme.typography.bodySmall,
@@ -224,7 +246,7 @@ fun ProfileScreen(
                 supportingText = state.newPasswordError?.asString()
                     ?: stringResource(Res.string.password_hint)
             )
-            if (state.isPasswordChangeSuccessful) {
+            if(state.isPasswordChangeSuccessful) {
                 Text(
                     text = stringResource(Res.string.password_change_successful),
                     color = MaterialTheme.colorScheme.extended.success,
@@ -256,16 +278,19 @@ fun ProfileScreen(
             }
         }
         val deviceConfiguration = currentDeviceConfiguration()
-        if (deviceConfiguration in listOf(
+        if(deviceConfiguration in listOf(
                 DeviceConfiguration.MOBILE_PORTRAIT,
                 DeviceConfiguration.MOBILE_LANDSCAPE
-            )
-        ) {
+            )) {
             Spacer(modifier = Modifier.weight(1f))
         }
     }
 
-    if (state.showDeleteConfirmationDialog) {
+    if(isHoveringWithFile) {
+        DragAndDropOverlay()
+    }
+
+    if(state.showDeleteConfirmationDialog) {
         DestructiveConfirmationDialog(
             title = stringResource(Res.string.delete_profile_picture),
             description = stringResource(Res.string.delete_profile_picture_desc),
