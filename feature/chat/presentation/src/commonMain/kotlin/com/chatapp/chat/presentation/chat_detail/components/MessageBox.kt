@@ -16,6 +16,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,7 +50,18 @@ fun MessageBox(
     val isConnected = connectionState == ConnectionState.CONNECTED
     ChirpMultiLineTextField(
         state = messageTextFieldState,
-        modifier = modifier,
+        modifier = modifier
+            .onPreviewKeyEvent { keyEvent ->
+                val isModifierKeyPressed = keyEvent.isMetaPressed || keyEvent.isCtrlPressed
+                val isSendShortcutPressed = isModifierKeyPressed
+                        && keyEvent.key == Key.Enter
+                        && keyEvent.type == KeyEventType.KeyDown
+
+                if (isSendShortcutPressed) {
+                    onSendClick()
+                    true
+                } else false
+            },
         placeholder = stringResource(Res.string.send_a_message),
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Send
@@ -51,7 +69,7 @@ fun MessageBox(
         onKeyboardAction = onSendClick,
         bottomContent = {
             Spacer(modifier = Modifier.weight(1f))
-            if(!isConnected) {
+            if (!isConnected) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)

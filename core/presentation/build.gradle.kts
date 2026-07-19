@@ -23,51 +23,15 @@ kotlin {
             }
         }
 
-        val mobileMain by creating {
+        val mobileMain by getting {
             dependencies {
                 implementation(libs.moko.permissions)
                 implementation(libs.moko.permissions.compose)
                 implementation(libs.moko.permissions.notifications)
             }
-            dependsOn(commonMain.get())
         }
-        androidMain.get().dependsOn(mobileMain)
-
-        val iosMain by creating {
-            dependsOn(mobileMain)
-        }
-
-        listOf(
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach { target ->
-            getByName("${target.name}Main") {
-                dependsOn(iosMain)
-            }
-        }
-
         androidMain {
-            dependencies {
-                // Add Android-specific dependencies here. Note that this source set depends on
-                // commonMain by default and will correctly pull the Android artifacts of any KMP
-                // dependencies declared in commonMain.
-            }
-        }
-
-        iosMain {
-            dependencies {
-                // Add iOS-specific dependencies here. This a source set created by Kotlin Gradle
-                // Plugin (KGP) that each specific iOS target (e.g., iosX64) depends on as
-                // part of KMP’s default source set hierarchy. Note that this source set depends
-                // on common by default and will correctly pull the iOS artifacts of any
-                // KMP dependencies declared in commonMain.
-            }
-        }
-
-        jvmMain {
-            dependencies {
-
-            }
+            dependsOn(mobileMain)
         }
     }
 

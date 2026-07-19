@@ -1,5 +1,6 @@
 package com.chatapp.chirp
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,20 +18,22 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 @Preview
 fun App(
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
     onAuthenticationChecked: () -> Unit = {},
+    onDeepLinkListenerSetup: () -> Unit = {},
     viewModel: MainViewModel = koinViewModel()
 ) {
     val navController = rememberNavController()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isCheckingAuth) {
-        if (!state.isCheckingAuth) {
+        if(!state.isCheckingAuth) {
             onAuthenticationChecked()
         }
     }
 
     ObserveAsEvents(viewModel.events) { event ->
-        when (event) {
+        when(event) {
             is MainEvent.OnSessionExpired -> {
                 navController.navigate(AuthGraphRoutes.Graph) {
                     popUpTo(AuthGraphRoutes.Graph) {
@@ -41,17 +44,19 @@ fun App(
         }
     }
 
-    ChirpTheme {
-        if (!state.isCheckingAuth) {
+    ChirpTheme(
+        darkTheme = isDarkTheme
+    ) {
+        if(!state.isCheckingAuth) {
             NavigationRoot(
                 navController = navController,
-                startDestination = if (state.isLoggedIn) {
+                startDestination = if(state.isLoggedIn) {
                     ChatGraphRoutes.Graph
                 } else {
                     AuthGraphRoutes.Graph
                 }
             )
-            DeepLinkListener(navController)
+            DeepLinkListener(navController, onDeepLinkListenerSetup)
         }
     }
 }

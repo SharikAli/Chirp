@@ -28,7 +28,19 @@ kotlin {
             }
         }
 
+        val jvmCommonMain by creating {
+            dependsOn(commonMain.get())
+        }
+
+        jvmMain {
+            dependsOn(jvmCommonMain)
+            dependencies {
+                implementation(libs.ktor.client.okhttp)
+            }
+        }
+
         androidMain {
+            dependsOn(jvmCommonMain)
             dependencies {
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.koin.compose)
@@ -41,11 +53,6 @@ kotlin {
             }
         }
 
-        jvmMain {
-            dependencies {
-
-            }
-        }
     }
 
 }

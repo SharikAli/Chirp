@@ -27,7 +27,7 @@ internal fun Project.configureKotlinMultiplatform() {
             }
         }
 
-//        applyHierarchyTemplate()
+        applyHierarchyTemplate()
 
         compilerOptions {
             freeCompilerArgs.add("-Xexpect-actual-classes")

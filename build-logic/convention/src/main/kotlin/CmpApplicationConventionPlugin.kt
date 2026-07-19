@@ -25,9 +25,9 @@ class CmpApplicationConventionPlugin: Plugin<Project> {
             configureIosTargets()
             configureDesktopTarget()
 
-//            extensions.configure<KotlinMultiplatformExtension> {
-//                applyHierarchyTemplate()
-//            }
+            extensions.configure<KotlinMultiplatformExtension> {
+                applyHierarchyTemplate()
+            }
 
             dependencies {
                 "androidMainImplementation"(libs.findLibrary("androidx-compose-ui-tooling").get())
