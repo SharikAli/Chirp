@@ -78,10 +78,12 @@ fun ProfileRoot(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val launcher = rememberImagePickerLauncher { pickedImageData ->
-        viewModel.onAction(ProfileAction.OnPictureSelected(
-            pickedImageData.bytes,
-            pickedImageData.mimeType
-        ))
+        viewModel.onAction(
+            ProfileAction.OnPictureSelected(
+                pickedImageData.bytes,
+                pickedImageData.mimeType
+            )
+        )
     }
 
     ChirpAdaptiveDialogSheetLayout(
@@ -90,11 +92,12 @@ fun ProfileRoot(
         ProfileScreen(
             state = state,
             onAction = { action ->
-                when(action) {
+                when (action) {
                     is ProfileAction.OnDismiss -> onDismiss()
                     is ProfileAction.OnUploadPictureClick -> {
                         launcher.launch()
                     }
+
                     else -> Unit
                 }
                 viewModel.onAction(action)
@@ -116,10 +119,12 @@ fun ProfileScreen(
             isHoveringWithFile = isHovered
         },
         onDrop = { imageData ->
-            onAction(ProfileAction.OnPictureSelected(
-                bytes = imageData.bytes,
-                mimeType = imageData.mimeType
-            ))
+            onAction(
+                ProfileAction.OnPictureSelected(
+                    bytes = imageData.bytes,
+                    mimeType = imageData.mimeType
+                )
+            )
         }
     )
 
@@ -204,7 +209,7 @@ fun ProfileScreen(
                 }
             }
 
-            if(state.imageError != null) {
+            if (state.imageError != null) {
                 Text(
                     text = state.imageError.asString(),
                     style = MaterialTheme.typography.bodySmall,
@@ -246,7 +251,7 @@ fun ProfileScreen(
                 supportingText = state.newPasswordError?.asString()
                     ?: stringResource(Res.string.password_hint)
             )
-            if(state.isPasswordChangeSuccessful) {
+            if (state.isPasswordChangeSuccessful) {
                 Text(
                     text = stringResource(Res.string.password_change_successful),
                     color = MaterialTheme.colorScheme.extended.success,
@@ -278,19 +283,20 @@ fun ProfileScreen(
             }
         }
         val deviceConfiguration = currentDeviceConfiguration()
-        if(deviceConfiguration in listOf(
+        if (deviceConfiguration in listOf(
                 DeviceConfiguration.MOBILE_PORTRAIT,
                 DeviceConfiguration.MOBILE_LANDSCAPE
-            )) {
+            )
+        ) {
             Spacer(modifier = Modifier.weight(1f))
         }
     }
 
-    if(isHoveringWithFile) {
+    if (isHoveringWithFile) {
         DragAndDropOverlay()
     }
 
-    if(state.showDeleteConfirmationDialog) {
+    if (state.showDeleteConfirmationDialog) {
         DestructiveConfirmationDialog(
             title = stringResource(Res.string.delete_profile_picture),
             description = stringResource(Res.string.delete_profile_picture_desc),

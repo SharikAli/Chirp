@@ -41,7 +41,7 @@ class ChatListViewModel(
         repository.getChats(),
         sessionStorage.observeAuthInfo()
     ) { currentState, chats, authInfo ->
-        if(authInfo == null) {
+        if (authInfo == null) {
             return@combine ChatListState()
         }
 
@@ -63,45 +63,60 @@ class ChatListViewModel(
             initialValue = ChatListState()
         )
 
-    private fun fetchLocalUserProfile() {
-        viewModelScope.launch {
-            chatParticipantRepository.fetchLocalParticipant()
-        }
-    }
-
     fun onAction(action: ChatListAction) {
         when (action) {
             is ChatListAction.OnSelectChat -> {
-                _state.update { it.copy(
-                    selectedChatId = action.chatId
-                ) }
+                _state.update {
+                    it.copy(
+                        selectedChatId = action.chatId
+                    )
+                }
             }
+
             ChatListAction.OnUserAvatarClick -> {
-                _state.update { it.copy(
-                    isUserMenuOpen = true
-                ) }
+                _state.update {
+                    it.copy(
+                        isUserMenuOpen = true
+                    )
+                }
             }
+
             ChatListAction.OnLogoutClick -> showLogoutConfirmation()
             ChatListAction.OnConfirmLogout -> logout()
             ChatListAction.OnDismissLogoutDialog -> {
-                _state.update { it.copy(
-                    showLogoutConfirmation = false
-                ) }
+                _state.update {
+                    it.copy(
+                        showLogoutConfirmation = false
+                    )
+                }
             }
+
             ChatListAction.OnProfileSettingsClick,
             ChatListAction.OnDismissUserMenu -> {
-                _state.update { it.copy(
-                    isUserMenuOpen = false
-                ) }
+                _state.update {
+                    it.copy(
+                        isUserMenuOpen = false
+                    )
+                }
             }
+
             else -> Unit
         }
     }
 
+    private fun fetchLocalUserProfile() {
+        viewModelScope.launch {
+            chatParticipantRepository
+                .fetchLocalParticipant()
+        }
+    }
+
     private fun logout() {
-        _state.update { it.copy(
-            showLogoutConfirmation = false
-        ) }
+        _state.update {
+            it.copy(
+                showLogoutConfirmation = false
+            )
+        }
 
         viewModelScope.launch {
             val authInfo = sessionStorage.observeAuthInfo().first()
@@ -128,10 +143,12 @@ class ChatListViewModel(
     }
 
     private fun showLogoutConfirmation() {
-        _state.update { it.copy(
-            isUserMenuOpen = false,
-            showLogoutConfirmation = true
-        ) }
+        _state.update {
+            it.copy(
+                isUserMenuOpen = false,
+                showLogoutConfirmation = true
+            )
+        }
     }
 
     private fun loadChats() {
