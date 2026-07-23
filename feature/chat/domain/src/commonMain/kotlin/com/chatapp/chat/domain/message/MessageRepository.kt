@@ -4,6 +4,7 @@ import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.domain.models.MessageWithSender
 import com.chatapp.chat.domain.models.OutgoingNewMessage
+import com.chatapp.chat.domain.models.OutgoingUserTyping
 import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
@@ -27,4 +28,6 @@ interface MessageRepository {
     suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote>
 
     fun getMessagesForChat(chatId: String): Flow<List<MessageWithSender>>
+
+    suspend fun sendTypingIndicator(message: OutgoingUserTyping): EmptyResult<DataError>
 }

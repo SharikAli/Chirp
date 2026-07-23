@@ -10,4 +10,5 @@ sealed interface ProfileAction {
     data object OnToggleCurrentPasswordVisibility: ProfileAction
     data object OnToggleNewPasswordVisibility: ProfileAction
     data object OnChangePasswordClick: ProfileAction
+    data class onToggleTypingIndicator(val enabled: Boolean): ProfileAction
 }

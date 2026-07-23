@@ -10,6 +10,7 @@ import chirp.feature.chat.presentation.generated.resources.error_current_passwor
 import chirp.feature.chat.presentation.generated.resources.error_current_password_incorrect
 import chirp.feature.chat.presentation.generated.resources.error_invalid_file_type
 import com.chatapp.chat.domain.participant.ChatParticipantRepository
+import com.chatapp.chat.domain.user_setting.UserSettingService
 import com.chatapp.core.domain.auth.AuthService
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.DataError
@@ -33,6 +34,7 @@ class ProfileViewModel(
     private val authService: AuthService,
     private val chatParticipantRepository: ChatParticipantRepository,
     private val sessionStorage: SessionStorage,
+    private val userSettingService: UserSettingService
 ) : ViewModel() {
 
     private var hasLoadedInitialData = false
@@ -55,6 +57,7 @@ class ProfileViewModel(
             if (!hasLoadedInitialData) {
                 observeCanChangePassword()
                 fetchLocalParticipantDetails()
+                fetchUserSetting()
                 hasLoadedInitialData = true
             }
         }
@@ -77,6 +80,7 @@ class ProfileViewModel(
             is ProfileAction.OnDeletePictureClick -> showDeleteConfirmation()
             is ProfileAction.OnConfirmDeleteClick -> deleteProfilePicture()
             is ProfileAction.OnDismissDeleteConfirmationDialogClick -> dismissDeleteConfirmation()
+            is ProfileAction.onToggleTypingIndicator -> updateTypingIndicator(action.enabled)
             else -> Unit
         }
     }
@@ -270,6 +274,38 @@ class ProfileViewModel(
                         it.copy(
                             newPasswordError = errorMessage,
                             isChangingPassword = false
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun updateTypingIndicator(enabled: Boolean) {
+        _state.update {
+            it.copy(
+                isTypingIndicatorEnabled = enabled
+            )
+        }
+
+        viewModelScope.launch {
+            userSettingService.changeTypingIndicatorState(enabled)
+                .onFailure {
+                    _state.update {
+                        it.copy(
+                            isTypingIndicatorEnabled = !enabled
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun fetchUserSetting() {
+        viewModelScope.launch {
+            userSettingService.fetchUserSetting()
+                .onSuccess { userSetting ->
+                    _state.update {
+                        it.copy(
+                            isTypingIndicatorEnabled = userSetting.typingIndicatorEnabled
                         )
                     }
                 }

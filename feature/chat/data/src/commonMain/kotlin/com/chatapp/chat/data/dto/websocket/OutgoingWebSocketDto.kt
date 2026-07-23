@@ -3,7 +3,8 @@ package com.chatapp.chat.data.dto.websocket
 import kotlinx.serialization.Serializable
 
 enum class OutgoingWebSocketType {
-    NEW_MESSAGE
+    NEW_MESSAGE,
+    TYPING
 }
 
 @Serializable
@@ -17,4 +18,10 @@ sealed class OutgoingWebSocketDto(
         val messageId: String,
         val content: String
     ): OutgoingWebSocketDto(OutgoingWebSocketType.NEW_MESSAGE)
+
+    @Serializable
+    data class UserTyping(
+        val chatId: String,
+        val isTyping: Boolean
+    ): OutgoingWebSocketDto(OutgoingWebSocketType.TYPING)
 }

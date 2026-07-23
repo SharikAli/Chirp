@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ import chirp.feature.chat.presentation.generated.resources.password_change_succe
 import chirp.feature.chat.presentation.generated.resources.password_hint
 import chirp.feature.chat.presentation.generated.resources.profile_image
 import chirp.feature.chat.presentation.generated.resources.save
+import chirp.feature.chat.presentation.generated.resources.show_typing_indicator
 import chirp.feature.chat.presentation.generated.resources.upload_icon
 import chirp.feature.chat.presentation.generated.resources.upload_image
 import com.chatapp.chat.presentation.profile.components.DragAndDropOverlay
@@ -282,6 +284,33 @@ fun ProfileScreen(
                 )
             }
         }
+
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.show_typing_indicator),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.extended.textTertiary,
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Switch(
+                    checked = state.isTypingIndicatorEnabled,
+                    onCheckedChange = {
+                        onAction(ProfileAction.onToggleTypingIndicator(it))
+                    },
+                )
+            }
+        }
+
         val deviceConfiguration = currentDeviceConfiguration()
         if (deviceConfiguration in listOf(
                 DeviceConfiguration.MOBILE_PORTRAIT,
