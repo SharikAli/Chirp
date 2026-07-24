@@ -126,7 +126,10 @@ class LoginViewModel(
                 .onFailure { error ->
                     val errorMessage = when (error) {
                         DataError.Remote.UNAUTHORIZED -> UiText.Resource(Res.string.error_invalid_credentials)
-                        DataError.Remote.FORBIDDEN -> UiText.Resource(Res.string.error_email_not_verified)
+                        DataError.Remote.FORBIDDEN -> {
+                            eventChannel.send(LoginEvent.NavigateToEmailVerificationScreen(email))
+                            UiText.Resource(Res.string.error_email_not_verified)
+                        }
                         else -> error.toUiText()
                     }
 

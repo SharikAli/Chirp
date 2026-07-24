@@ -30,6 +30,9 @@ fun NavGraphBuilder.authGraph(
                         restoreState = true
                         launchSingleTop = true
                     }
+                },
+                navigateToEmailVerificationScreen = {
+                    navController.navigate(AuthGraphRoutes.RegisterSuccess(it))
                 }
             )
         }
