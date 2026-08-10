@@ -1,27 +1,35 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Desktop (JVM).
+# Chirp
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Chirp is a multi-platform real-time messaging app for Android, iOS, and Desktop devices built with Kotlin Multiplatform and Compose Multiplatform.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+### Mobile View  
+<div align="center">
+  <img width="900" alt="tablet-chat" src="screenshots/android-ios-app.png" />
+</div>
 
-### Running the apps
+### Desktop, Foldable & Tablet View
+<div align="center">
+  <img width="900" alt="tablet-chat" src="screenshots/desktop-tablet-foldable-view.png" />
+</div>
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## What's covered?
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- Desktop app:
-  - Hot reload: `./gradlew :desktopApp:hotRun --auto`
-  - Standard run: `./gradlew :desktopApp:run`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+- Kotlin Multiplatform & Compose Multiplatform
+- Clean Architecture principles
+- Multi-module architecture for KMP projects
+- Gradle configuration for cross-platform development
+- Authentication (JWT token management)
+- Real-time messaging with WebSocket
+- Push notifications with Firebase
+- Room for local database
+- Desktop app development
+- Desktop, iOS and Android native integrations
 
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+# Technology Stack
+- [Kotlin Multiplatform & Compose multiplatform](https://github.com/JetBrains/compose-multiplatform)
+- [Firebase](https://firebase.google.com/)
+- [Coroutines](https://github.com/Kotlin/kotlinx.coroutines) + [Flow](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/) for asynchronous.
+- [Ktor](https://github.com/ktorio/ktor): for making network requests.
+- [Room](https://developer.android.com/kotlin/multiplatform/room): for local database.
+- [Koin](https://github.com/InsertKoinIO/koin): a pragmatic lightweight dependency injection framework.
+- [DataStore KMP](https://developer.android.com/kotlin/multiplatform/datastore): to store data asynchronously in a key-value pairs.
