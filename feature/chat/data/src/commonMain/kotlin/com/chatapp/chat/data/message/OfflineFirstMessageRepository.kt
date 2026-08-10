@@ -13,6 +13,7 @@ import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.domain.models.MessageWithSender
 import com.chatapp.chat.domain.models.OutgoingNewMessage
+import com.chatapp.chat.domain.models.OutgoingUserTyping
 import com.chatapp.core.data.database.safeDatabaseUpdate
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.DataError
@@ -147,11 +148,28 @@ class OfflineFirstMessageRepository(
             }
     }
 
+    override suspend fun sendTypingIndicator(message: OutgoingUserTyping): EmptyResult<DataError> {
+        return webSocketConnector.sendMessage(
+            message
+                .toWebSocketDto()
+                .toJsonPayload()
+        )
+    }
+
     private fun OutgoingWebSocketDto.NewMessage.toJsonPayload(): String {
         val webSocketMessage = WebSocketMessageDto(
             type = type.name,
             payload = json.encodeToString(this)
         )
+        return json.encodeToString(webSocketMessage)
+    }
+
+    private fun OutgoingWebSocketDto.UserTyping.toJsonPayload(): String {
+        val webSocketMessage = WebSocketMessageDto(
+            type = type.name,
+            payload = json.encodeToString(this)
+        )
+
         return json.encodeToString(webSocketMessage)
     }
 }

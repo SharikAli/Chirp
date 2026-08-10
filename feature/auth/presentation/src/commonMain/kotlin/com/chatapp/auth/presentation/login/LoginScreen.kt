@@ -43,13 +43,15 @@ fun LoginRoot(
     viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    onCreateAccountClick: () -> Unit
+    onCreateAccountClick: () -> Unit,
+    navigateToEmailVerificationScreen: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     ObserveAsEvents(viewModel.events) { event ->
         when(event) {
             LoginEvent.Success -> onLoginSuccess()
+            is LoginEvent.NavigateToEmailVerificationScreen -> navigateToEmailVerificationScreen(event.email)
         }
     }
 

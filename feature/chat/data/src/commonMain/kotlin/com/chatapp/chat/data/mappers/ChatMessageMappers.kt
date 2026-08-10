@@ -8,6 +8,7 @@ import com.chatapp.chat.database.view.LastMessageView
 import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.domain.models.OutgoingNewMessage
+import com.chatapp.chat.domain.models.OutgoingUserTyping
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -105,5 +106,12 @@ fun OutgoingWebSocketDto.NewMessage.toEntity(
         senderId = senderId,
         deliveryStatus = deliveryStatus.name,
         timestamp = Clock.System.now().toEpochMilliseconds()
+    )
+}
+
+fun OutgoingUserTyping.toWebSocketDto(): OutgoingWebSocketDto.UserTyping {
+    return OutgoingWebSocketDto.UserTyping(
+        chatId = chatId,
+        isTyping = isTyping
     )
 }

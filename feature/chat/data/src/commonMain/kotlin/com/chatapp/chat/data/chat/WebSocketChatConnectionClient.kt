@@ -5,6 +5,7 @@ import com.chatapp.chat.data.dto.websocket.IncomingWebSocketType
 import com.chatapp.chat.data.dto.websocket.WebSocketMessageDto
 import com.chatapp.chat.data.mappers.toDomain
 import com.chatapp.chat.data.mappers.toEntity
+import com.chatapp.chat.data.mappers.toUserTyping
 import com.chatapp.chat.data.network.KtorWebSocketConnector
 import com.chatapp.chat.database.ChirpChatDatabase
 import com.chatapp.chat.domain.chat.ChatConnectionClient
@@ -14,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
@@ -28,9 +30,14 @@ class WebSocketChatConnectionClient(
     private val applicationScope: CoroutineScope
 ) : ChatConnectionClient {
 
-    override val chatMessages = webSocketConnector
-        .messages
-        .mapNotNull { parseIncomingMessage(it) }
+    private val incomingMessages = webSocketConnector.messages
+        .mapNotNull(::parseIncomingMessage)
+        .shareIn(
+            applicationScope,
+            SharingStarted.WhileSubscribed(5000)
+        )
+
+    override val chatMessages = incomingMessages
         .onEach { handleIncomingMessage(it) }
         .filterIsInstance<IncomingWebSocketDto.NewMessageDto>()
         .mapNotNull {
@@ -42,6 +49,14 @@ class WebSocketChatConnectionClient(
         )
 
     override val connectionState = webSocketConnector.connectionState
+
+    override val typingEvents = incomingMessages
+        .filterIsInstance<IncomingWebSocketDto.UserTypingDto>()
+        .map { it.toUserTyping() }
+        .shareIn(
+            applicationScope,
+            SharingStarted.WhileSubscribed(5000)
+        )
 
     private fun parseIncomingMessage(message: WebSocketMessageDto): IncomingWebSocketDto? {
         return when (message.type) {
@@ -61,6 +76,10 @@ class WebSocketChatConnectionClient(
                 json.decodeFromString<IncomingWebSocketDto.ChatParticipantsChangedDto>(message.payload)
             }
 
+            IncomingWebSocketType.USER_TYPING.name -> {
+                json.decodeFromString<IncomingWebSocketDto.UserTypingDto>(message.payload)
+            }
+
             else -> null
         }
     }
@@ -71,6 +90,7 @@ class WebSocketChatConnectionClient(
             is IncomingWebSocketDto.MessageDeletedDto -> deleteMessage(message)
             is IncomingWebSocketDto.NewMessageDto -> handleNewMessage(message)
             is IncomingWebSocketDto.ProfilePictureUpdated -> updateProfilePicture(message)
+            is IncomingWebSocketDto.UserTypingDto -> Unit
         }
     }
 

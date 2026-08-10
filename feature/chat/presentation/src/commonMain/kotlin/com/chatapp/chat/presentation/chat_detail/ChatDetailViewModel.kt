@@ -7,13 +7,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import chirp.feature.chat.presentation.generated.resources.Res
+import chirp.feature.chat.presentation.generated.resources.multiple_people_typing
+import chirp.feature.chat.presentation.generated.resources.several_people_typing
+import chirp.feature.chat.presentation.generated.resources.someone_typing
 import chirp.feature.chat.presentation.generated.resources.today
 import com.chatapp.chat.domain.chat.ChatConnectionClient
 import com.chatapp.chat.domain.chat.ChatRepository
 import com.chatapp.chat.domain.message.MessageRepository
 import com.chatapp.chat.domain.models.ChatMessage
+import com.chatapp.chat.domain.models.ChatParticipant
 import com.chatapp.chat.domain.models.ConnectionState
 import com.chatapp.chat.domain.models.OutgoingNewMessage
+import com.chatapp.chat.domain.models.OutgoingUserTyping
 import com.chatapp.chat.presentation.mappers.toUi
 import com.chatapp.chat.presentation.mappers.toUiList
 import com.chatapp.chat.presentation.model.MessageUi
@@ -25,12 +30,15 @@ import com.chatapp.core.domain.util.onSuccess
 import com.chatapp.core.presentation.util.UiText
 import com.chatapp.core.presentation.util.toUiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -39,7 +47,10 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -56,6 +67,11 @@ class ChatDetailViewModel(
     private val _chatId = MutableStateFlow<String?>(null)
 
     private var hasLoadedInitialData = false
+
+    private val typingUsers = MutableStateFlow<Map<String, Long>>(emptyMap())
+
+    private var typingJob: Job? = null
+    private var isTyping = false
 
     private var currentPaginator: Paginator<String?, ChatMessage>? = null
 
@@ -74,6 +90,14 @@ class ChatDetailViewModel(
             } else emptyFlow()
         }
 
+    private val chatParticipants = _chatId
+        .flatMapLatest { chatId ->
+            if (chatId != null) {
+                chatRepository.getActiveParticipantsByChatId(chatId)
+            } else emptyFlow()
+        }
+        .distinctUntilChanged()
+
     private val _state = MutableStateFlow(ChatDetailState())
 
     private val canSendMessage = snapshotFlow { _state.value.messageTextFieldState.text.toString() }
@@ -86,15 +110,23 @@ class ChatDetailViewModel(
     private val stateWithMessages = combine(
         _state,
         chatInfoFlow,
-        sessionStorage.observeAuthInfo()
-    ) { currentState, chatInfo, authInfo ->
+        sessionStorage.observeAuthInfo(),
+        typingUsers,
+        chatParticipants,
+    ) { currentState, chatInfo, authInfo, typingUsers, chatParticipants ->
         if (authInfo == null) {
             return@combine ChatDetailState()
         }
 
+        val typingText = createTypingText(
+            typingUsers = typingUsers,
+            chatParticipants = chatParticipants
+        )
+
         currentState.copy(
             chatUi = chatInfo.chat.toUi(authInfo.user.id),
-            messages = chatInfo.messages.toUiList(authInfo.user.id)
+            messages = chatInfo.messages.toUiList(authInfo.user.id),
+            typingText = typingText
         )
     }
 
@@ -111,6 +143,8 @@ class ChatDetailViewModel(
                 observeConnectionState()
                 observeChatMessages()
                 observeCanSendMessage()
+                observeTypingUsers()
+                observeMessageTyping()
                 hasLoadedInitialData = true
             }
         }
@@ -245,6 +279,40 @@ class ChatDetailViewModel(
         }
     }
 
+    private fun createTypingText(
+        typingUsers: Map<String, Long>,
+        chatParticipants: List<ChatParticipant>
+    ): UiText? {
+
+        val now = Clock.System.now().toEpochMilliseconds()
+
+        val activeUsers = typingUsers.keys
+            .filter { userId ->
+                now - (typingUsers[userId] ?: 0) < 3000
+            }
+            .mapNotNull { userId ->
+                chatParticipants
+                    .firstOrNull { it.userId == userId }
+                    ?.username
+            }
+
+        if (activeUsers.isEmpty()) return null
+
+        return when {
+            activeUsers.size == 1 -> UiText.Resource(
+                Res.string.someone_typing,
+                arrayOf(activeUsers.first())
+            )
+
+            activeUsers.size <= 3 -> UiText.Resource(
+                Res.string.multiple_people_typing,
+                arrayOf(activeUsers.joinToString(", "))
+            )
+
+            else -> UiText.Resource(Res.string.several_people_typing)
+        }
+    }
+
     private fun sendMessage() {
         val currentChatId = _chatId.value
         val content = state.value.messageTextFieldState.text.toString().trim()
@@ -262,6 +330,8 @@ class ChatDetailViewModel(
             messageRepository
                 .sendMessage(message)
                 .onSuccess {
+                    stopTyping(currentChatId)
+
                     state.value.messageTextFieldState.clearText()
                 }
                 .onFailure { error ->
@@ -328,6 +398,84 @@ class ChatDetailViewModel(
             .launchIn(viewModelScope)
     }
 
+    private fun observeTypingUsers() {
+        connectionClient.typingEvents
+            .combine(_chatId) { event, chatId ->
+                if (event.chatId == chatId) {
+                    event
+                } else {
+                    null
+                }
+            }
+            .filterNotNull()
+            .onEach { event ->
+                typingUsers.update { current ->
+                    if (event.isTyping) {
+                        current + (event.userId to Clock.System.now().toEpochMilliseconds())
+                    } else {
+                        current - event.userId
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun startTyping(chatId: String) {
+        if (typingJob != null) {
+            return
+        }
+
+        typingJob = viewModelScope.launch {
+            isTyping = true
+
+            while (isActive) {
+                messageRepository.sendTypingIndicator(
+                    OutgoingUserTyping(
+                        chatId = chatId,
+                        isTyping = true
+                    )
+                )
+
+                delay(2000.milliseconds)
+            }
+        }
+    }
+
+    private fun stopTyping(chatId: String) {
+        typingJob?.cancel()
+        typingJob = null
+
+        if (!isTyping) {
+            return
+        }
+
+        isTyping = false
+
+//        viewModelScope.launch {
+//            messageRepository.sendTypingIndicator(
+//                OutgoingUserTyping(
+//                    chatId = chatId,
+//                    isTyping = false
+//                )
+//            )
+//        }
+    }
+
+    private fun observeMessageTyping() {
+        snapshotFlow { _state.value.messageTextFieldState.text.toString() }
+            .distinctUntilChanged()
+            .onEach { text ->
+                val chatId = _chatId.value ?: return@onEach
+
+                if (text.isBlank()) {
+                    stopTyping(chatId)
+                } else {
+                    startTyping(chatId)
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
     private fun setupPaginatorForChat(chatId: String) {
         currentPaginator = Paginator(
             initialKey = null,
@@ -369,6 +517,8 @@ class ChatDetailViewModel(
 
     private fun onLeaveChatClick() {
         val chatId = _chatId.value ?: return
+
+        stopTyping(chatId)
 
         _state.update {
             it.copy(
@@ -420,6 +570,10 @@ class ChatDetailViewModel(
     }
 
     private fun switchChat(chatId: String?) {
+        _chatId.value?.let {
+            stopTyping(it)
+        }
+
         _chatId.update { chatId }
         viewModelScope.launch {
             chatId?.let {
