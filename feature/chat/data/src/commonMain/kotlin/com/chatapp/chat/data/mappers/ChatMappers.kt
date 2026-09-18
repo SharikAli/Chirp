@@ -24,7 +24,8 @@ fun ChatDto.toDomain(): Chat {
         participants = participants.map { it.toDomain() },
         lastActivityAt = Instant.parse(lastActivityAt),
         lastMessage = lastMessage?.toDomain(),
-        lastMessageSenderUsername = lastMessageSenderUsername
+        lastMessageSenderUsername = lastMessageSenderUsername,
+        creatorId = creator.userId
     )
 }
 
@@ -40,7 +41,8 @@ fun ChatEntity.toDomain(
         participants = participants,
         lastActivityAt = Instant.fromEpochMilliseconds(lastActivityAt),
         lastMessage = lastMessage,
-        lastMessageSenderUsername = lastMessageSenderUsername
+        lastMessageSenderUsername = lastMessageSenderUsername,
+        creatorId = creatorId
     )
 }
 
@@ -50,14 +52,16 @@ fun ChatWithParticipants.toDomain(): Chat {
         participants = participants.map { it.toDomain() },
         lastActivityAt = Instant.fromEpochMilliseconds(chat.lastActivityAt),
         lastMessage = lastMessage?.toDomain(),
-        lastMessageSenderUsername = lastMessage?.senderUsername
+        lastMessageSenderUsername = lastMessage?.senderUsername,
+        creatorId = chat.creatorId
     )
 }
 
 fun Chat.toEntity(): ChatEntity {
     return ChatEntity(
         chatId = id,
-        lastActivityAt = lastActivityAt.toEpochMilliseconds()
+        lastActivityAt = lastActivityAt.toEpochMilliseconds(),
+        creatorId = creatorId
     )
 }
 

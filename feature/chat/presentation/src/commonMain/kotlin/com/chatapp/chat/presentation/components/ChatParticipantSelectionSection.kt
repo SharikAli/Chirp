@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import chirp.feature.chat.presentation.generated.resources.Res
+import chirp.feature.chat.presentation.generated.resources.remove_member
 import com.chatapp.core.designsystem.components.avatar.ChatParticipantUi
 import com.chatapp.core.designsystem.components.avatar.ChirpAvatarPhoto
 import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
@@ -25,13 +31,16 @@ import com.chatapp.core.designsystem.theme.extended
 import com.chatapp.core.designsystem.theme.titleXSmall
 import com.chatapp.core.presentation.util.DeviceConfiguration
 import com.chatapp.core.presentation.util.currentDeviceConfiguration
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ColumnScope.ChatParticipantsSelectionSection(
     existingParticipants: List<ChatParticipantUi>,
     selectedParticipants: List<ChatParticipantUi>,
     modifier: Modifier = Modifier,
-    searchResult: ChatParticipantUi? = null
+    searchResult: ChatParticipantUi? = null,
+    canRemoveExistingParticipants: Boolean = false,
+    onRemoveExistingParticipantClick: (ChatParticipantUi) -> Unit = {}
 ) {
     val deviceConfiguration = currentDeviceConfiguration()
     val rootHeightModifier = when (deviceConfiguration) {
@@ -61,6 +70,9 @@ fun ColumnScope.ChatParticipantsSelectionSection(
             ) { participant ->
                 ChatParticipantListItem(
                     participantUi = participant,
+                    onRemoveClick = if (canRemoveExistingParticipants) {
+                        { onRemoveExistingParticipantClick(participant) }
+                    } else null,
                     modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -101,7 +113,8 @@ fun ColumnScope.ChatParticipantsSelectionSection(
 @Composable
 fun ChatParticipantListItem(
     participantUi: ChatParticipantUi,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRemoveClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -120,7 +133,17 @@ fun ChatParticipantListItem(
             style = MaterialTheme.typography.titleXSmall,
             color = MaterialTheme.colorScheme.extended.textPrimary,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
+        if (onRemoveClick != null) {
+            IconButton(onClick = onRemoveClick) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(Res.string.remove_member),
+                    tint = MaterialTheme.colorScheme.extended.textSecondary
+                )
+            }
+        }
     }
 }

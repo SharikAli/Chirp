@@ -7,5 +7,6 @@ data class Chat(
     val participants: List<ChatParticipant>,
     val lastActivityAt: Instant,
     val lastMessage: ChatMessage?,
+    val creatorId: String,
     val lastMessageSenderUsername: String? = null
 )

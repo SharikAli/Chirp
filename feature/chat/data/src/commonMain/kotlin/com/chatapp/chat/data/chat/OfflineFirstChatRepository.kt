@@ -75,6 +75,17 @@ class OfflineFirstChatRepository(
             }
     }
 
+    override fun getAllKnownParticipantsByChatId(chatId: String): Flow<List<ChatParticipant>> {
+        return db.chatDao.getAllKnownParticipantsByChatId(chatId)
+            .map { participants ->
+                participants.map { it.toDomain() }
+            }
+    }
+
+    override fun observeChatExists(chatId: String): Flow<Boolean> {
+        return db.chatDao.getChatInfoById(chatId).map { it != null }
+    }
+
     override suspend fun fetchChats(): Result<List<Chat>, DataError.Remote> {
         return chatService
             .getChats()

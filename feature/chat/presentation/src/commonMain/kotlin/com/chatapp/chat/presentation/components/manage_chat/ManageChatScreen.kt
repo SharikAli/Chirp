@@ -20,6 +20,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import chirp.feature.chat.presentation.generated.resources.Res
 import chirp.feature.chat.presentation.generated.resources.cancel
+import chirp.feature.chat.presentation.generated.resources.remove_member
+import chirp.feature.chat.presentation.generated.resources.remove_member_confirmation_desc
+import chirp.feature.chat.presentation.generated.resources.remove_member_confirmation_title
 import com.chatapp.chat.presentation.components.ChatParticipantSearchTextSection
 import com.chatapp.chat.presentation.components.ChatParticipantsSelectionSection
 import com.chatapp.chat.presentation.components.ManageChatButtonSection
@@ -27,6 +30,7 @@ import com.chatapp.chat.presentation.components.ManageChatHeaderRow
 import com.chatapp.core.designsystem.components.ChirpButton
 import com.chatapp.core.designsystem.components.ChirpButtonStyle
 import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
+import com.chatapp.core.designsystem.components.dialogs.DestructiveConfirmationDialog
 import com.chatapp.core.designsystem.theme.ChirpTheme
 import com.chatapp.core.presentation.util.DeviceConfiguration
 import com.chatapp.core.presentation.util.clearFocusOnTap
@@ -91,7 +95,11 @@ fun ManageChatScreen(
             selectedParticipants = state.selectedChatParticipants,
             modifier = Modifier
                 .fillMaxWidth(),
-            searchResult = state.currentSearchResult
+            searchResult = state.currentSearchResult,
+            canRemoveExistingParticipants = state.canRemoveParticipants,
+            onRemoveExistingParticipantClick = { participant ->
+                onAction(ManageChatAction.OnRemoveParticipantClick(participant))
+            }
         )
         ChirpHorizontalDivider()
         ManageChatButtonSection(
@@ -116,6 +124,31 @@ fun ManageChatScreen(
             },
             error = state.submitError?.asString(),
             modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    val participantPendingRemoval = state.participantPendingRemoval
+    if (participantPendingRemoval != null) {
+        DestructiveConfirmationDialog(
+            title = stringResource(
+                Res.string.remove_member_confirmation_title,
+                participantPendingRemoval.username
+            ),
+            description = stringResource(
+                Res.string.remove_member_confirmation_desc,
+                participantPendingRemoval.username
+            ),
+            confirmButtonText = stringResource(Res.string.remove_member),
+            cancelButtonText = stringResource(Res.string.cancel),
+            onDismiss = {
+                onAction(ManageChatAction.OnDismissRemoveParticipantDialog)
+            },
+            onCancelClick = {
+                onAction(ManageChatAction.OnDismissRemoveParticipantDialog)
+            },
+            onConfirmClick = {
+                onAction(ManageChatAction.OnConfirmRemoveParticipant)
+            },
         )
     }
 }

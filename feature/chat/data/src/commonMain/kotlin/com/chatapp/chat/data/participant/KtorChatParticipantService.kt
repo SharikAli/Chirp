@@ -2,6 +2,7 @@ package com.chatapp.chat.data.participant
 
 import com.chatapp.chat.data.dto.ChatParticipantDto
 import com.chatapp.chat.data.dto.request.ConfirmProfilePictureRequest
+import com.chatapp.chat.data.dto.request.RemoveParticipantsRequest
 import com.chatapp.chat.data.dto.response.ProfilePictureUploadUrlsResponse
 import com.chatapp.chat.data.mappers.toDomain
 import com.chatapp.chat.domain.models.ChatParticipant
@@ -76,6 +77,19 @@ class KtorChatParticipantService(
     override suspend fun deleteProfilePicture(): EmptyResult<DataError.Remote> {
         return httpClient.delete(
             route = "/participants/profile-picture"
+        )
+    }
+
+    override suspend fun removeParticipants(
+        chatId: String,
+        userIds: List<String>
+    ): EmptyResult<DataError.Remote> {
+        return httpClient.delete<RemoveParticipantsRequest, Unit>(
+            route = "/chat/remove/participants",
+            body = RemoveParticipantsRequest(
+                chatId = chatId,
+                userIds = userIds
+            )
         )
     }
 }

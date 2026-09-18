@@ -70,6 +70,24 @@ suspend inline fun <reified Response : Any> HttpClient.delete(
     }
 }
 
+suspend inline fun <reified Request, reified Response : Any> HttpClient.delete(
+    route: String,
+    body: Request,
+    queryParams: Map<String, Any> = mapOf(),
+    crossinline builder: HttpRequestBuilder.() -> Unit = {}
+): Result<Response, DataError.Remote> {
+    return safeCall {
+        delete {
+            url(constructRoute(route))
+            queryParams.forEach { (key, value) ->
+                parameter(key, value)
+            }
+            setBody(body)
+            builder()
+        }
+    }
+}
+
 suspend inline fun <reified Request, reified Response : Any> HttpClient.put(
     route: String,
     queryParams: Map<String, Any> = mapOf(),

@@ -62,4 +62,12 @@
     <string name="error_current_password_equal_to_new_one">Your new password can't be equal to the old one.</string>
     <string name="error_invalid_file_type">This file type is not supported.</string>
     <string name="show_typing_indicator">Show Typing Indicator"</string>
+    <string name="leave_chat_confirmation_title">Leave this chat?</string>
+    <string name="leave_chat_confirmation_desc">You will no longer receive messages from this chat.</string>
+    <string name="leave_chat_admin_confirmation_title">Leave and delete this chat?</string>
+    <string name="leave_chat_admin_confirmation_desc">Leaving will permanently delete this chat for all members. This can\'t be undone.</string>
+    <string name="chat_was_deleted">This chat was deleted</string>
+    <string name="remove_member">Remove member</string>
+    <string name="remove_member_confirmation_title">Remove %1$s from this chat?</string>
+    <string name="remove_member_confirmation_desc">%1$s will no longer be able to see or send messages in this chat.</string>
 </resources>

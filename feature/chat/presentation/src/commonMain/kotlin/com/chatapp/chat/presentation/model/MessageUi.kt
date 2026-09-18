@@ -23,4 +23,21 @@ sealed class MessageUi(open val id: String) {
         override val id: String,
         val date: UiText,
     ) : MessageUi(id)
+
+    data class ParticipantRemoved(
+        override val id: String,
+        val removedBy: ChatParticipantUi,
+        val removedUsers: List<ChatParticipantUi>
+    ) : MessageUi(id)
+
+    data class ParticipantAdded(
+        override val id: String,
+        val addedBy: ChatParticipantUi,
+        val addedUsers: List<ChatParticipantUi>
+    ) : MessageUi(id)
+
+    data class ParticipantLeft(
+        override val id: String,
+        val participant: ChatParticipantUi
+    ) : MessageUi(id)
 }

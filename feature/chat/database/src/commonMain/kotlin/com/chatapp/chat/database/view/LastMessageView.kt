@@ -22,5 +22,7 @@ data class LastMessageView(
     val content: String,
     val timestamp: Long,
     val deliveryStatus: String,
-    val senderUsername: String?
+    val senderUsername: String?,
+    val type: String = "TEXT",
+    val payload: String? = null
 )
