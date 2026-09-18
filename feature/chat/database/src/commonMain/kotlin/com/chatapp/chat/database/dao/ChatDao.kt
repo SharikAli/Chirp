@@ -72,6 +72,17 @@ interface ChatDao {
 
     @Query(
         """
+        SELECT p.*
+        FROM chatparticipantentity p
+        JOIN chatparticipantcrossref cpcr ON p.userId = cpcr.userId
+        WHERE cpcr.chatId = :chatId
+        ORDER BY p.username
+    """
+    )
+    fun getAllKnownParticipantsByChatId(chatId: String): Flow<List<ChatParticipantEntity>>
+
+    @Query(
+        """
         SELECT c.*
         FROM chatentity c
         WHERE c.chatId = :chatId
@@ -123,7 +134,9 @@ interface ChatDao {
                         senderId = senderId,
                         content = content,
                         timestamp = timestamp,
-                        deliveryStatus = deliveryStatus
+                        deliveryStatus = deliveryStatus,
+                        type = type,
+                        payload = payload
                     )
                 )
             }

@@ -21,7 +21,8 @@ data class ChatDetailState(
     val isChatOptionsOpen: Boolean = false,
     val isNearBottom: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
-    val typingText: UiText? = null
+    val typingText: UiText? = null,
+    val showLeaveChatConfirmation: Boolean = false
 )
 
 data class BannerState(

@@ -58,6 +58,14 @@ class WebSocketChatConnectionClient(
             SharingStarted.WhileSubscribed(5000)
         )
 
+    override val chatDeletedEvents = incomingMessages
+        .filterIsInstance<IncomingWebSocketDto.ChatDeletedDto>()
+        .map { it.chatId }
+        .shareIn(
+            applicationScope,
+            SharingStarted.WhileSubscribed(5000)
+        )
+
     private fun parseIncomingMessage(message: WebSocketMessageDto): IncomingWebSocketDto? {
         return when (message.type) {
             IncomingWebSocketType.NEW_MESSAGE.name -> {
@@ -76,6 +84,14 @@ class WebSocketChatConnectionClient(
                 json.decodeFromString<IncomingWebSocketDto.ChatParticipantsChangedDto>(message.payload)
             }
 
+            IncomingWebSocketType.CHAT_PARTICIPANTS_REMOVED.name -> {
+                json.decodeFromString<IncomingWebSocketDto.ChatParticipantsRemovedDto>(message.payload)
+            }
+
+            IncomingWebSocketType.CHAT_DELETED.name -> {
+                json.decodeFromString<IncomingWebSocketDto.ChatDeletedDto>(message.payload)
+            }
+
             IncomingWebSocketType.USER_TYPING.name -> {
                 json.decodeFromString<IncomingWebSocketDto.UserTypingDto>(message.payload)
             }
@@ -86,7 +102,9 @@ class WebSocketChatConnectionClient(
 
     private suspend fun handleIncomingMessage(message: IncomingWebSocketDto) {
         when (message) {
-            is IncomingWebSocketDto.ChatParticipantsChangedDto -> refreshChat(message)
+            is IncomingWebSocketDto.ChatParticipantsChangedDto -> refreshChat(message.chatId)
+            is IncomingWebSocketDto.ChatParticipantsRemovedDto -> refreshChat(message.chatId)
+            is IncomingWebSocketDto.ChatDeletedDto -> deleteChat(message.chatId)
             is IncomingWebSocketDto.MessageDeletedDto -> deleteMessage(message)
             is IncomingWebSocketDto.NewMessageDto -> handleNewMessage(message)
             is IncomingWebSocketDto.ProfilePictureUpdated -> updateProfilePicture(message)
@@ -94,8 +112,12 @@ class WebSocketChatConnectionClient(
         }
     }
 
-    private suspend fun refreshChat(message: IncomingWebSocketDto.ChatParticipantsChangedDto) {
-        chatRepository.fetchChatById(message.chatId)
+    private suspend fun refreshChat(chatId: String) {
+        chatRepository.fetchChatById(chatId)
+    }
+
+    private suspend fun deleteChat(chatId: String) {
+        database.chatDao.deleteChatById(chatId)
     }
 
     private suspend fun deleteMessage(message: IncomingWebSocketDto.MessageDeletedDto) {

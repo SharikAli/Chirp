@@ -28,4 +28,9 @@ interface ChatParticipantService {
     ): EmptyResult<DataError.Remote>
 
     suspend fun deleteProfilePicture(): EmptyResult<DataError.Remote>
+
+    suspend fun removeParticipants(
+        chatId: String,
+        userIds: List<String>
+    ): EmptyResult<DataError.Remote>
 }

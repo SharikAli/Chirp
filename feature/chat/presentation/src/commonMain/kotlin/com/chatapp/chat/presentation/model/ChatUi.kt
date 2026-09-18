@@ -8,5 +8,9 @@ data class ChatUi(
     val localParticipant: ChatParticipantUi,
     val otherParticipants: List<ChatParticipantUi>,
     val lastMessage: ChatMessage?,
-    val lastMessageSenderUsername: String?
-)
+    val lastMessageSenderUsername: String?,
+    val creatorId: String = ""
+) {
+    val isLocalParticipantAdmin: Boolean
+        get() = creatorId == localParticipant.id
+}

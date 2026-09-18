@@ -59,6 +59,24 @@ fun MessageListItemUi(
                     color = getChatBubbleColorForUser(messageUi.sender.id)
                 )
             }
+
+            is MessageUi.ParticipantRemoved -> {
+                ParticipantRemovedChip(
+                    messageUi = messageUi
+                )
+            }
+
+            is MessageUi.ParticipantAdded -> {
+                ParticipantAddedChip(
+                    messageUi = messageUi
+                )
+            }
+
+            is MessageUi.ParticipantLeft -> {
+                ParticipantLeftChip(
+                    messageUi = messageUi
+                )
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.chatapp.chat.data.participant
 
+import com.chatapp.chat.database.ChirpChatDatabase
 import com.chatapp.chat.domain.models.ChatParticipant
 import com.chatapp.chat.domain.participant.ChatParticipantRepository
 import com.chatapp.chat.domain.participant.ChatParticipantService
@@ -12,7 +13,8 @@ import kotlinx.coroutines.flow.first
 
 class OfflineFirstChatParticipantRepository(
     private val sessionStorage: SessionStorage,
-    private val chatParticipantService: ChatParticipantService
+    private val chatParticipantService: ChatParticipantService,
+    private val db: ChirpChatDatabase
 ) : ChatParticipantRepository {
 
     override suspend fun fetchLocalParticipant(): Result<ChatParticipant, DataError> {
@@ -78,6 +80,20 @@ class OfflineFirstChatParticipantRepository(
                             profilePictureUrl = null
                         )
                     )
+                )
+            }
+    }
+
+    override suspend fun removeParticipants(
+        chatId: String,
+        userIds: List<String>
+    ): EmptyResult<DataError.Remote> {
+        return chatParticipantService
+            .removeParticipants(chatId, userIds)
+            .onSuccess {
+                db.chatParticipantsCrossRefDao.markParticipantsAsInactive(
+                    chatId = chatId,
+                    userIds = userIds
                 )
             }
     }

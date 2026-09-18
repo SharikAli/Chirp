@@ -10,4 +10,5 @@ interface ChatConnectionClient {
     val chatMessages: Flow<ChatMessage>
     val connectionState: StateFlow<ConnectionState>
     val typingEvents: Flow<UserTypingEvent>
+    val chatDeletedEvents: Flow<String>
 }

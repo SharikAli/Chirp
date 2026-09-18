@@ -30,6 +30,7 @@ fun ManageChatRoot(
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             is ManageChatEvent.OnMembersAdded -> onMembersAdded()
+            is ManageChatEvent.OnParticipantRemoved -> Unit
         }
     }
 

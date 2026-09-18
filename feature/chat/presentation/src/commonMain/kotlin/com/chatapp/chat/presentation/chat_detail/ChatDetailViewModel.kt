@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import chirp.feature.chat.presentation.generated.resources.Res
+import chirp.feature.chat.presentation.generated.resources.chat_was_deleted
 import chirp.feature.chat.presentation.generated.resources.multiple_people_typing
 import chirp.feature.chat.presentation.generated.resources.several_people_typing
 import chirp.feature.chat.presentation.generated.resources.someone_typing
@@ -14,6 +15,7 @@ import chirp.feature.chat.presentation.generated.resources.today
 import com.chatapp.chat.domain.chat.ChatConnectionClient
 import com.chatapp.chat.domain.chat.ChatRepository
 import com.chatapp.chat.domain.message.MessageRepository
+import com.chatapp.chat.domain.models.ChatInfo
 import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatParticipant
 import com.chatapp.chat.domain.models.ConnectionState
@@ -22,6 +24,7 @@ import com.chatapp.chat.domain.models.OutgoingUserTyping
 import com.chatapp.chat.presentation.mappers.toUi
 import com.chatapp.chat.presentation.mappers.toUiList
 import com.chatapp.chat.presentation.model.MessageUi
+import com.chatapp.core.domain.auth.AuthInfo
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.DataErrorException
 import com.chatapp.core.domain.util.Paginator
@@ -38,6 +41,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
@@ -54,12 +58,20 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private data class StateWithMessagesInput(
+    val currentState: ChatDetailState,
+    val chatInfo: ChatInfo,
+    val authInfo: AuthInfo?,
+    val typingUsers: Map<String, Long>,
+    val chatParticipants: List<ChatParticipant>
+)
+
 class ChatDetailViewModel(
     private val chatRepository: ChatRepository,
     private val sessionStorage: SessionStorage,
     private val messageRepository: MessageRepository,
     private val connectionClient: ChatConnectionClient
-) : ViewModel() {
+): ViewModel() {
 
     private val eventChannel = Channel<ChatDetailEvent>()
     val events = eventChannel.receiveAsFlow()
@@ -98,6 +110,14 @@ class ChatDetailViewModel(
         }
         .distinctUntilChanged()
 
+    private val chatAllKnownParticipants = _chatId
+        .flatMapLatest { chatId ->
+            if (chatId != null) {
+                chatRepository.getAllKnownParticipantsByChatId(chatId)
+            } else emptyFlow()
+        }
+        .distinctUntilChanged()
+
     private val _state = MutableStateFlow(ChatDetailState())
 
     private val canSendMessage = snapshotFlow { _state.value.messageTextFieldState.text.toString() }
@@ -114,6 +134,10 @@ class ChatDetailViewModel(
         typingUsers,
         chatParticipants,
     ) { currentState, chatInfo, authInfo, typingUsers, chatParticipants ->
+        StateWithMessagesInput(currentState, chatInfo, authInfo, typingUsers, chatParticipants)
+    }.combine(chatAllKnownParticipants) { input, allKnownParticipants ->
+        val (currentState, chatInfo, authInfo, typingUsers, chatParticipants) = input
+
         if (authInfo == null) {
             return@combine ChatDetailState()
         }
@@ -125,7 +149,7 @@ class ChatDetailViewModel(
 
         currentState.copy(
             chatUi = chatInfo.chat.toUi(authInfo.user.id),
-            messages = chatInfo.messages.toUiList(authInfo.user.id),
+            messages = chatInfo.messages.toUiList(authInfo.user.id, allKnownParticipants),
             typingText = typingText
         )
     }
@@ -145,6 +169,7 @@ class ChatDetailViewModel(
                 observeCanSendMessage()
                 observeTypingUsers()
                 observeMessageTyping()
+                observeChatDeletedRemotely()
                 hasLoadedInitialData = true
             }
         }
@@ -162,6 +187,8 @@ class ChatDetailViewModel(
             ChatDetailAction.OnDismissChatOptions -> onDismissChatOptions()
             ChatDetailAction.OnDismissMessageMenu -> onDismissMessageMenu()
             ChatDetailAction.OnLeaveChatClick -> onLeaveChatClick()
+            ChatDetailAction.OnConfirmLeaveChat -> confirmLeaveChat()
+            ChatDetailAction.OnDismissLeaveChatDialog -> dismissLeaveChatDialog()
             is ChatDetailAction.OnMessageLongClick -> onMessageLongClick(action.message)
             is ChatDetailAction.OnRetryClick -> retryMessage(action.message)
             ChatDetailAction.OnScrollToTop -> onScrollToTop()
@@ -516,13 +543,30 @@ class ChatDetailViewModel(
     }
 
     private fun onLeaveChatClick() {
+        _state.update {
+            it.copy(
+                isChatOptionsOpen = false,
+                showLeaveChatConfirmation = true
+            )
+        }
+    }
+
+    private fun dismissLeaveChatDialog() {
+        _state.update {
+            it.copy(
+                showLeaveChatConfirmation = false
+            )
+        }
+    }
+
+    private fun confirmLeaveChat() {
         val chatId = _chatId.value ?: return
 
         stopTyping(chatId)
 
         _state.update {
             it.copy(
-                isChatOptionsOpen = false
+                showLeaveChatConfirmation = false
             )
         }
 
@@ -551,6 +595,49 @@ class ChatDetailViewModel(
                     )
                 }
         }
+    }
+
+    private fun observeChatDeletedRemotely() {
+        connectionClient.chatDeletedEvents
+            .combine(_chatId) { deletedChatId, currentChatId -> deletedChatId == currentChatId }
+            .filter { it }
+            .onEach { onChatGoneRemotely() }
+            .launchIn(viewModelScope)
+
+        _chatId
+            .flatMapLatest { chatId ->
+                if (chatId != null) {
+                    // Track whether we've observed the chat existing at least once so that
+                    // a brand new chat that hasn't synced into Room yet isn't mistaken for
+                    // one that was deleted out from under us.
+                    var hasSeenChatExist = false
+                    chatRepository.observeChatExists(chatId)
+                        .onEach { exists -> if (exists) hasSeenChatExist = true }
+                        .filter { exists -> !exists && hasSeenChatExist }
+                } else emptyFlow()
+            }
+            .onEach { onChatGoneRemotely() }
+            .launchIn(viewModelScope)
+    }
+
+    private suspend fun onChatGoneRemotely() {
+        val chatId = _chatId.value ?: return
+        stopTyping(chatId)
+
+        _chatId.update { null }
+        _state.update {
+            it.copy(
+                chatUi = null,
+                messages = emptyList(),
+                bannerState = BannerState()
+            )
+        }
+
+        eventChannel.send(
+            ChatDetailEvent.OnChatDeletedRemotely(
+                UiText.Resource(Res.string.chat_was_deleted)
+            )
+        )
     }
 
     private fun onDismissChatOptions() {

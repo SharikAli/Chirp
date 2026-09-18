@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -36,7 +35,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -48,7 +46,16 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import chirp.feature.chat.presentation.generated.resources.Res
+import chirp.feature.chat.presentation.generated.resources.cancel
+import chirp.feature.chat.presentation.generated.resources.leave_chat
+import chirp.feature.chat.presentation.generated.resources.leave_chat_admin_confirmation_desc
+import chirp.feature.chat.presentation.generated.resources.leave_chat_admin_confirmation_title
+import chirp.feature.chat.presentation.generated.resources.leave_chat_confirmation_desc
+import chirp.feature.chat.presentation.generated.resources.leave_chat_confirmation_title
 import chirp.feature.chat.presentation.generated.resources.no_chat_selected
 import chirp.feature.chat.presentation.generated.resources.select_a_chat
 import com.chatapp.chat.domain.models.ChatMessage
@@ -64,6 +71,7 @@ import com.chatapp.chat.presentation.components.EmptySection
 import com.chatapp.chat.presentation.model.ChatUi
 import com.chatapp.chat.presentation.model.MessageUi
 import com.chatapp.core.designsystem.components.avatar.ChatParticipantUi
+import com.chatapp.core.designsystem.components.dialogs.DestructiveConfirmationDialog
 import com.chatapp.core.designsystem.theme.ChirpTheme
 import com.chatapp.core.designsystem.theme.extended
 import com.chatapp.core.presentation.util.ObserveAsEvents
@@ -106,6 +114,11 @@ fun ChatDetailRoot(
             is ChatDetailEvent.OnError -> {
                 snackbarState.showSnackbar(event.error.asStringAsync())
             }
+
+            is ChatDetailEvent.OnChatDeletedRemotely -> {
+                onBack()
+                snackbarState.showSnackbar(event.message.asStringAsync())
+            }
         }
     }
 
@@ -119,8 +132,9 @@ fun ChatDetailRoot(
         }
     }
 
-    BackHandler(
-        enabled = !isDetailPresent
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = !isDetailPresent
     ) {
         scope.launch {
             // Add artificial delay to prevent detail back animation from showing
@@ -380,6 +394,31 @@ fun ChatDetailScreen(
             }
         }
     }
+
+    if (state.showLeaveChatConfirmation) {
+        val isAdmin = state.chatUi?.isLocalParticipantAdmin == true
+        DestructiveConfirmationDialog(
+            title = stringResource(
+                if (isAdmin) Res.string.leave_chat_admin_confirmation_title
+                else Res.string.leave_chat_confirmation_title
+            ),
+            description = stringResource(
+                if (isAdmin) Res.string.leave_chat_admin_confirmation_desc
+                else Res.string.leave_chat_confirmation_desc
+            ),
+            confirmButtonText = stringResource(Res.string.leave_chat),
+            cancelButtonText = stringResource(Res.string.cancel),
+            onDismiss = {
+                onAction(ChatDetailAction.OnDismissLeaveChatDialog)
+            },
+            onCancelClick = {
+                onAction(ChatDetailAction.OnDismissLeaveChatDialog)
+            },
+            onConfirmClick = {
+                onAction(ChatDetailAction.OnConfirmLeaveChat)
+            },
+        )
+    }
 }
 
 @Composable
@@ -460,27 +499,102 @@ private fun ChatDetailMessagesPreview() {
                     ),
                     lastMessageSenderUsername = "Philipp"
                 ),
-                messages = (1..20).map {
-                    if (it % 2 == 0) {
-                        MessageUi.LocalUserMessage(
-                            id = Uuid.random().toString(),
-                            content = "Hello world!",
-                            deliveryStatus = ChatMessageDeliveryStatus.SENT,
-                            formattedSentTime = UiText.DynamicString("Friday, Aug 20")
-                        )
-                    } else {
-                        MessageUi.OtherUserMessage(
-                            id = Uuid.random().toString(),
-                            content = "Hello world!",
-                            sender = ChatParticipantUi(
-                                id = Uuid.random().toString(),
-                                username = "John",
-                                initials = "JO"
+                messages = listOf(
+                    MessageUi.DateSeparator(
+                        id = Uuid.random().toString(),
+                        date = UiText.DynamicString("Friday, Aug 20")
+                    ),
+
+                    MessageUi.OtherUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Hey! Are we still on for lunch today?",
+                        sender = ChatParticipantUi(
+                            id = "2",
+                            username = "Cinderella",
+                            initials = "CI"
+                        ),
+                        formattedSentTime = UiText.DynamicString("9:15 AM")
+                    ),
+
+                    MessageUi.LocalUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Yep! I'll be there in about 10 minutes.",
+                        deliveryStatus = ChatMessageDeliveryStatus.SENT,
+                        formattedSentTime = UiText.DynamicString("9:16 AM")
+                    ),
+
+                    MessageUi.ParticipantRemoved(
+                        id = Uuid.random().toString(),
+                        removedBy = ChatParticipantUi(
+                            id = "1",
+                            username = "Noah Thomas",
+                            initials = "NT"
+                        ),
+                        removedUsers = listOf(
+                            ChatParticipantUi(
+                                id = "2",
+                                username = "James Wilson",
+                                initials = "JW"
                             ),
-                            formattedSentTime = UiText.DynamicString("Friday, Aug 20"),
+                            ChatParticipantUi(
+                                id = "3",
+                                username = "Alex Johnson",
+                                initials = "AJ"
+                            ),
+                            ChatParticipantUi(
+                                id = "4",
+                                username = "Emma Brown",
+                                initials = "EB"
+                            ),
+                            ChatParticipantUi(
+                                id = "5",
+                                username = "Liam Davis",
+                                initials = "LD"
+                            )
                         )
-                    }
-                }
+                    ),
+
+                    MessageUi.OtherUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Looks good! See you soon 👋",
+                        sender = ChatParticipantUi(
+                            id = "3",
+                            username = "Josh",
+                            initials = "JO"
+                        ),
+                        formattedSentTime = UiText.DynamicString("9:18 AM")
+                    ),
+
+                    MessageUi.DateSeparator(
+                        id = Uuid.random().toString(),
+                        date = UiText.DynamicString("Saturday, Aug 21")
+                    ),
+
+                    MessageUi.LocalUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Morning everyone!",
+                        deliveryStatus = ChatMessageDeliveryStatus.SENT,
+                        formattedSentTime = UiText.DynamicString("8:05 AM")
+                    ),
+
+                    MessageUi.OtherUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Good morning! Ready for today's meeting?",
+                        sender = ChatParticipantUi(
+                            id = "2",
+                            username = "Cinderella",
+                            initials = "CI"
+                        ),
+                        formattedSentTime = UiText.DynamicString("8:06 AM")
+                    ),
+
+                    MessageUi.LocalUserMessage(
+                        id = Uuid.random().toString(),
+                        content = "Absolutely 👍",
+                        deliveryStatus = ChatMessageDeliveryStatus.FAILED,
+                        formattedSentTime = UiText.DynamicString("8:07 AM")
+                    )
+                )
             ),
             isDetailPresent = true,
             onAction = {},
