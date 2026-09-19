@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chirp.feature.chat.presentation.generated.resources.Res
-import chirp.feature.chat.presentation.generated.resources.remove_member
+import chirp.feature.chat.presentation.generated.resources.remove
 import com.chatapp.core.designsystem.components.avatar.ChatParticipantUi
 import com.chatapp.core.designsystem.components.avatar.ChirpAvatarPhoto
 import com.chatapp.core.designsystem.components.brand.ChirpHorizontalDivider
@@ -140,7 +140,7 @@ fun ChatParticipantListItem(
             IconButton(onClick = onRemoveClick) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.remove_member),
+                    contentDescription = stringResource(Res.string.remove),
                     tint = MaterialTheme.colorScheme.extended.textSecondary
                 )
             }

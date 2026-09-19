@@ -4,13 +4,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.chatapp.core.data.security.SecureStorage
 import com.chatapp.core.domain.preferences.ThemePreference
 import com.chatapp.core.domain.preferences.ThemePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class DataStoreThemePreferences(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val secureStorage: SecureStorage
 ) : ThemePreferences {
 
     private val themePreferenceKey = stringPreferencesKey("theme_preference")
@@ -34,4 +36,26 @@ class DataStoreThemePreferences(
             preferences[themePreferenceKey] = theme.name
         }
     }
+
+//    override fun observeThemePreference(): Flow<ThemePreference> {
+//        return dataStore
+//            .data
+//            .map { preferences ->
+//                val cipherText = preferences[themePreferenceKey]
+//                val currentPreference =
+//                    cipherText?.let(secureStorage::decrypt) ?: ThemePreference.SYSTEM.name
+//                try {
+//                    ThemePreference.valueOf(currentPreference)
+//                } catch (_: Exception) {
+//                    ThemePreference.SYSTEM
+//                }
+//            }
+//    }
+
+//    override suspend fun updateThemePreference(theme: ThemePreference) {
+//        dataStore.edit { preferences ->
+//            preferences[themePreferenceKey] = secureStorage.encrypt(theme.name)
+//        }
+//    }
+
 }

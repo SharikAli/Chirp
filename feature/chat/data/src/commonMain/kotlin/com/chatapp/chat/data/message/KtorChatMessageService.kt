@@ -1,11 +1,13 @@
 package com.chatapp.chat.data.message
 
 import com.chatapp.chat.data.dto.ChatMessageDto
+import com.chatapp.chat.data.dto.SendMessageRequestDto
 import com.chatapp.chat.data.mappers.toDomain
 import com.chatapp.chat.domain.message.ChatMessageService
 import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.core.data.network.delete
 import com.chatapp.core.data.network.get
+import com.chatapp.core.data.network.post
 import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
@@ -20,6 +22,17 @@ class KtorChatMessageService(
         return httpClient.delete(
             route = "/messages/$messageId"
         )
+    }
+
+    override suspend fun sendMessage(
+        chatId: String,
+        content: String,
+        messageId: String?
+    ): Result<ChatMessage, DataError.Remote> {
+        return httpClient.post<SendMessageRequestDto, ChatMessageDto>(
+            route = "/messages/$chatId",
+            body = SendMessageRequestDto(content = content, messageId = messageId)
+        ).map { it.toDomain() }
     }
 
     override suspend fun fetchMessages(

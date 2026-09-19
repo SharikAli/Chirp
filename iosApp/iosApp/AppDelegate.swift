@@ -13,13 +13,38 @@ import UIKit
 import UserNotifications
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
+    // Must match PushNotificationCategory.NEW_MESSAGE on the backend (FirebasePushNotificationService
+    // sets this as the APNs `aps.category`, which is what makes iOS attach the actions below).
+    static let newMessageCategoryIdentifier = "NEW_MESSAGE"
+    static let replyActionIdentifier = "REPLY_ACTION"
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
 
         UNUserNotificationCenter.current().delegate = self
         Messaging.messaging().delegate = self
+        registerNotificationCategories()
 
         return true
+    }
+
+    func registerNotificationCategories() {
+        let replyAction = UNTextInputNotificationAction(
+            identifier: AppDelegate.replyActionIdentifier,
+            title: "Reply",
+            options: [],
+            textInputButtonTitle: "Send",
+            textInputPlaceholder: "Type a message…"
+        )
+
+        let newMessageCategory = UNNotificationCategory(
+            identifier: AppDelegate.newMessageCategoryIdentifier,
+            actions: [replyAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
+        UNUserNotificationCenter.current().setNotificationCategories([newMessageCategory])
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
@@ -58,11 +83,30 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
 
-        if let chatId = userInfo["chatId"] as? String {
-            let deepLinkUrl = "http://chat_detail/\(chatId)"
-            ExternalUriHandler.shared.onNewUri(uri: deepLinkUrl)
+        guard let chatId = userInfo["chatId"] as? String else {
+            completionHandler()
+            return
         }
 
+        if response.actionIdentifier == AppDelegate.replyActionIdentifier, let textResponse = response as? UNTextInputNotificationResponse {
+            let replyText = textResponse.userText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if replyText.isEmpty {
+                completionHandler()
+                return
+            }
+
+            // No app UI is opened for this path - the send happens entirely in the
+            // background, then the locally cached chat is updated so it's already there
+            // next time the app is opened. See IosNotificationReplyBridge / MessageRepository.sendMessageViaRest.
+            IosNotificationReplyBridge.shared.sendReply(chatId: chatId, content: replyText) { _ in
+                completionHandler()
+            }
+            return
+        }
+
+        let deepLinkUrl = "http://chat_detail/\(chatId)"
+        ExternalUriHandler.shared.onNewUri(uri: deepLinkUrl)
         completionHandler()
     }
 

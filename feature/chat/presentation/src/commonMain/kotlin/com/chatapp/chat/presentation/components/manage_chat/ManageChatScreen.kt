@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import chirp.feature.chat.presentation.generated.resources.Res
 import chirp.feature.chat.presentation.generated.resources.cancel
-import chirp.feature.chat.presentation.generated.resources.remove_member
+import chirp.feature.chat.presentation.generated.resources.remove
 import chirp.feature.chat.presentation.generated.resources.remove_member_confirmation_desc
 import chirp.feature.chat.presentation.generated.resources.remove_member_confirmation_title
 import com.chatapp.chat.presentation.components.ChatParticipantSearchTextSection
@@ -138,7 +138,7 @@ fun ManageChatScreen(
                 Res.string.remove_member_confirmation_desc,
                 participantPendingRemoval.username
             ),
-            confirmButtonText = stringResource(Res.string.remove_member),
+            confirmButtonText = stringResource(Res.string.remove),
             cancelButtonText = stringResource(Res.string.cancel),
             onDismiss = {
                 onAction(ManageChatAction.OnDismissRemoveParticipantDialog)

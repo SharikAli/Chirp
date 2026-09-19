@@ -14,11 +14,13 @@ import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.domain.models.MessageWithSender
 import com.chatapp.chat.domain.models.OutgoingNewMessage
 import com.chatapp.chat.domain.models.OutgoingUserTyping
+import com.chatapp.chat.database.entities.ChatMessageEntity
 import com.chatapp.core.data.database.safeDatabaseUpdate
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
+import com.chatapp.core.domain.util.asEmptyResult
 import com.chatapp.core.domain.util.onFailure
 import com.chatapp.core.domain.util.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +64,46 @@ class OfflineFirstMessageRepository(
                         )
                     }.join()
                 }
+        }
+    }
+
+    override suspend fun sendMessageViaRest(
+        chatId: String,
+        content: String,
+        messageId: String
+    ): EmptyResult<DataError> {
+        return safeDatabaseUpdate {
+            val localUserId = sessionStorage.observeAuthInfo().first()?.user?.id
+                ?: return Result.Failure(DataError.Local.NOT_FOUND)
+
+            database.chatMessageDao.upsertMessage(
+                ChatMessageEntity(
+                    messageId = messageId,
+                    chatId = chatId,
+                    content = content,
+                    senderId = localUserId,
+                    deliveryStatus = ChatMessageDeliveryStatus.SENDING.name,
+                    timestamp = Clock.System.now().toEpochMilliseconds()
+                )
+            )
+
+            return chatMessageService
+                .sendMessage(chatId = chatId, content = content, messageId = messageId)
+                .onSuccess { sentMessage ->
+                    applicationScope.launch {
+                        database.chatMessageDao.upsertMessage(sentMessage.toEntity())
+                    }.join()
+                }
+                .onFailure {
+                    applicationScope.launch {
+                        database.chatMessageDao.updateDeliveryStatus(
+                            messageId = messageId,
+                            timestamp = Clock.System.now().toEpochMilliseconds(),
+                            status = ChatMessageDeliveryStatus.FAILED.name
+                        )
+                    }.join()
+                }
+                .asEmptyResult()
         }
     }
 
