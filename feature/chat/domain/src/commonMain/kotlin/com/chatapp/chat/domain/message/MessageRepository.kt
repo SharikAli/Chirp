@@ -23,6 +23,15 @@ interface MessageRepository {
 
     suspend fun sendMessage(message: OutgoingNewMessage): EmptyResult<DataError>
 
+    // Sends over plain REST instead of the WebSocket connection sendMessage() uses. For
+    // callers that can't assume a live socket - e.g. a notification reply action's
+    // background handler, which never opens the app UI.
+    suspend fun sendMessageViaRest(
+        chatId: String,
+        content: String,
+        messageId: String
+    ): EmptyResult<DataError>
+
     suspend fun retryMessage(messageId: String): EmptyResult<DataError>
 
     suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote>

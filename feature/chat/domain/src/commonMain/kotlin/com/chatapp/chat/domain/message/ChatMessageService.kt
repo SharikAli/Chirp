@@ -12,4 +12,13 @@ interface ChatMessageService {
     ): Result<List<ChatMessage>, DataError.Remote>
 
     suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote>
+
+    // Plain REST send, as opposed to the WebSocket-based send used by MessageRepository.sendMessage.
+    // Used where a live socket connection can't be assumed, e.g. sending a reply from a
+    // notification action while the app isn't open.
+    suspend fun sendMessage(
+        chatId: String,
+        content: String,
+        messageId: String? = null
+    ): Result<ChatMessage, DataError.Remote>
 }

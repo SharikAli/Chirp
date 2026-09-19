@@ -1,0 +1,7 @@
+<resources>
+    <string name="notification_channel_messages_name">Messages</string>
+    <string name="notification_channel_messages_description">New chat messages</string>
+    <string name="notification_reply_action">Reply</string>
+    <string name="notification_reply_hint">Type a message…</string>
+    <string name="notification_reply_failed">Couldn\'t send. Tap to retry.</string>
+</resources>
