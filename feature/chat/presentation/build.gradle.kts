@@ -29,6 +29,9 @@ kotlin {
 
                 implementation(libs.compose.components.resources)
                 implementation(libs.compose.uiToolingPreview)
+                implementation(libs.coil.compose)
+                implementation(libs.coil.network.ktor)
+                implementation(libs.jetbrains.compose.material.icons.extended)
             }
         }
 

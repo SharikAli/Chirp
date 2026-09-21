@@ -7,4 +7,5 @@ sealed interface ChatDetailEvent {
     data class OnError(val error: UiText): ChatDetailEvent
     data object OnNewMessage: ChatDetailEvent
     data class OnChatDeletedRemotely(val message: UiText): ChatDetailEvent
+    data class OnImageSaved(val message: UiText): ChatDetailEvent
 }

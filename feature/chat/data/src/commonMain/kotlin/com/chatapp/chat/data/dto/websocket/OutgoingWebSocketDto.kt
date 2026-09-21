@@ -16,7 +16,8 @@ sealed class OutgoingWebSocketDto(
     data class NewMessage(
         val chatId: String,
         val messageId: String,
-        val content: String
+        val content: String,
+        val imageUrls: List<String>? = null
     ): OutgoingWebSocketDto(OutgoingWebSocketType.NEW_MESSAGE)
 
     @Serializable

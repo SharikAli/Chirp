@@ -3,5 +3,6 @@ package com.chatapp.chat.domain.models
 data class OutgoingNewMessage(
     val chatId: String,
     val messageId: String,
-    val content: String
+    val content: String,
+    val imageUrls: List<String> = emptyList()
 )

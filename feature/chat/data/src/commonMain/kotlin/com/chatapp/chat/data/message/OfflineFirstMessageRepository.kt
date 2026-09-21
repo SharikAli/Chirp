@@ -21,6 +21,7 @@ import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 import com.chatapp.core.domain.util.asEmptyResult
+import com.chatapp.core.domain.util.map
 import com.chatapp.core.domain.util.onFailure
 import com.chatapp.core.domain.util.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -105,6 +106,26 @@ class OfflineFirstMessageRepository(
                 }
                 .asEmptyResult()
         }
+    }
+
+    override suspend fun uploadChatImage(
+        chatId: String,
+        imageBytes: ByteArray,
+        mimeType: String
+    ): Result<String, DataError.Remote> {
+        val credentialsResult = chatMessageService.getImageUploadUrl(chatId, mimeType)
+        val credentials = when (credentialsResult) {
+            is Result.Failure -> return credentialsResult
+            is Result.Success -> credentialsResult.data
+        }
+
+        return chatMessageService
+            .uploadImage(credentials.uploadUrl, imageBytes, credentials.headers)
+            .map { credentials.publicUrl }
+    }
+
+    override suspend fun downloadImage(url: String): Result<ByteArray, DataError.Remote> {
+        return chatMessageService.downloadImage(url)
     }
 
     override suspend fun retryMessage(messageId: String): EmptyResult<DataError> {

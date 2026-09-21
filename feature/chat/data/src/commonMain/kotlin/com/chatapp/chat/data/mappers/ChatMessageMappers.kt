@@ -12,7 +12,10 @@ import com.chatapp.chat.domain.models.ChatMessageType
 import com.chatapp.chat.domain.models.OutgoingNewMessage
 import com.chatapp.chat.domain.models.OutgoingUserTyping
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -31,6 +34,12 @@ private fun parsePayload(type: ChatMessageType, jsonElement: JsonElement?): Chat
     return try {
         val jsonObject = jsonElement.jsonObject
         when (type) {
+            ChatMessageType.IMAGE -> ChatMessagePayload.Image(
+                imageUrls = jsonObject["imageUrls"]?.jsonArray
+                    ?.map { it.jsonPrimitive.content }
+                    .orEmpty()
+            )
+
             ChatMessageType.PARTICIPANTS_JOINED -> ChatMessagePayload.ParticipantsJoined(
                 joinedUserIds = jsonObject["joinedUserIds"]?.jsonArray
                     ?.map { it.jsonPrimitive.content }
@@ -47,7 +56,7 @@ private fun parsePayload(type: ChatMessageType, jsonElement: JsonElement?): Chat
                 userId = jsonObject["userId"]?.jsonPrimitive?.content.orEmpty()
             )
 
-            ChatMessageType.TEXT, ChatMessageType.IMAGE -> null
+            ChatMessageType.TEXT -> null
         }
     } catch (_: Exception) {
         null
@@ -61,29 +70,39 @@ private fun parsePayload(type: ChatMessageType, rawPayload: String?): ChatMessag
 
 private fun ChatMessagePayload.toRawJson(): String {
     return when (this) {
-        is ChatMessagePayload.ParticipantsJoined -> payloadJson.encodeToString(
-            kotlinx.serialization.json.JsonObject(
+        is ChatMessagePayload.Image -> payloadJson.encodeToString(
+            JsonObject(
                 mapOf(
-                    "joinedUserIds" to kotlinx.serialization.json.JsonArray(
-                        joinedUserIds.map { kotlinx.serialization.json.JsonPrimitive(it) }
+                    "imageUrls" to JsonArray(
+                        imageUrls.map { JsonPrimitive(it) }
+                    )
+                )
+            )
+        )
+
+        is ChatMessagePayload.ParticipantsJoined -> payloadJson.encodeToString(
+            JsonObject(
+                mapOf(
+                    "joinedUserIds" to JsonArray(
+                        joinedUserIds.map { JsonPrimitive(it) }
                     )
                 )
             )
         )
 
         is ChatMessagePayload.ParticipantsRemoved -> payloadJson.encodeToString(
-            kotlinx.serialization.json.JsonObject(
+            JsonObject(
                 mapOf(
-                    "removedUserIds" to kotlinx.serialization.json.JsonArray(
-                        removedUserIds.map { kotlinx.serialization.json.JsonPrimitive(it) }
+                    "removedUserIds" to JsonArray(
+                        removedUserIds.map { JsonPrimitive(it) }
                     )
                 )
             )
         )
 
         is ChatMessagePayload.ParticipantLeft -> payloadJson.encodeToString(
-            kotlinx.serialization.json.JsonObject(
-                mapOf("userId" to kotlinx.serialization.json.JsonPrimitive(userId))
+            JsonObject(
+                mapOf("userId" to JsonPrimitive(userId))
             )
         )
     }
@@ -173,7 +192,9 @@ fun IncomingWebSocketDto.NewMessageDto.toEntity(): ChatMessageEntity {
         timestamp = Instant.parse(createdAt).toEpochMilliseconds(),
         deliveryStatus = ChatMessageDeliveryStatus.SENT.name,
         type = type,
-        payload = payload?.let { payloadJson.encodeToString(JsonElement.serializer(), it) }
+        payload = payload?.let {
+            payloadJson.encodeToString(JsonElement.serializer(), it)
+        }
     )
 }
 
@@ -181,7 +202,8 @@ fun OutgoingNewMessage.toWebSocketDto(): OutgoingWebSocketDto.NewMessage {
     return OutgoingWebSocketDto.NewMessage(
         chatId = chatId,
         messageId = messageId,
-        content = content
+        content = content,
+        imageUrls = imageUrls.ifEmpty { null }
     )
 }
 
@@ -189,13 +211,19 @@ fun OutgoingWebSocketDto.NewMessage.toEntity(
     senderId: String,
     deliveryStatus: ChatMessageDeliveryStatus
 ): ChatMessageEntity {
+    val payload = imageUrls
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { ChatMessagePayload.Image(it) }
+
     return ChatMessageEntity(
         messageId = messageId,
         chatId = chatId,
         content = content,
         senderId = senderId,
         deliveryStatus = deliveryStatus.name,
-        timestamp = Clock.System.now().toEpochMilliseconds()
+        timestamp = Clock.System.now().toEpochMilliseconds(),
+        type = if (payload != null) ChatMessageType.IMAGE.name else ChatMessageType.TEXT.name,
+        payload = payload?.toRawJson()
     )
 }
 

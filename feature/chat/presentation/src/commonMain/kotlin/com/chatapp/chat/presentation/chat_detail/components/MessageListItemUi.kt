@@ -29,7 +29,8 @@ fun MessageListItemUi(
     onDismissMessageMenu: () -> Unit,
     onDeleteClick: (MessageUi.LocalUserMessage) -> Unit,
     onRetryClick: (MessageUi.LocalUserMessage) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onImageClick: (imageUrls: List<String>, index: Int) -> Unit = { _, _ -> }
 ) {
     Box(
         modifier = modifier
@@ -49,14 +50,16 @@ fun MessageListItemUi(
                     onMessageLongClick = { onMessageLongClick(messageUi) },
                     onDismissMessageMenu = onDismissMessageMenu,
                     onDeleteClick = { onDeleteClick(messageUi) },
-                    onRetryClick = { onRetryClick(messageUi) }
+                    onRetryClick = { onRetryClick(messageUi) },
+                    onImageClick = onImageClick
                 )
             }
 
             is MessageUi.OtherUserMessage -> {
                 OtherUserMessage(
                     message = messageUi,
-                    color = getChatBubbleColorForUser(messageUi.sender.id)
+                    color = getChatBubbleColorForUser(messageUi.sender.id),
+                    onImageClick = onImageClick
                 )
             }
 
