@@ -9,14 +9,16 @@ sealed class MessageUi(open val id: String) {
         override val id: String,
         val content: String,
         val deliveryStatus: ChatMessageDeliveryStatus,
-        val formattedSentTime: UiText
+        val formattedSentTime: UiText,
+        val imageUrls: List<String> = emptyList()
     ) : MessageUi(id)
 
     data class OtherUserMessage(
         override val id: String,
         val content: String,
         val formattedSentTime: UiText,
-        val sender: ChatParticipantUi
+        val sender: ChatParticipantUi,
+        val imageUrls: List<String> = emptyList()
     ) : MessageUi(id)
 
     data class DateSeparator(

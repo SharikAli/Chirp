@@ -36,20 +36,24 @@ fun MessageWithSender.toUi(
         return systemMessage
     }
 
+    val imageUrls = (message.payload as? ChatMessagePayload.Image)?.imageUrls.orEmpty()
+
     val isFromLocalUser = this.sender.userId == localUserId
     return if (isFromLocalUser) {
         MessageUi.LocalUserMessage(
             id = message.id,
             content = message.content,
             deliveryStatus = message.deliveryStatus,
-            formattedSentTime = DateUtils.formatMessageTime(instant = message.createdAt)
+            formattedSentTime = DateUtils.formatMessageTime(instant = message.createdAt),
+            imageUrls = imageUrls
         )
     } else {
         MessageUi.OtherUserMessage(
             id = message.id,
             content = message.content,
             formattedSentTime = DateUtils.formatMessageTime(instant = message.createdAt),
-            sender = sender.toUi()
+            sender = sender.toUi(),
+            imageUrls = imageUrls
         )
     }
 }

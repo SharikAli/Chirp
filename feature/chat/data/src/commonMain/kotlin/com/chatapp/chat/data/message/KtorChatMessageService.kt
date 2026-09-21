@@ -2,17 +2,25 @@ package com.chatapp.chat.data.message
 
 import com.chatapp.chat.data.dto.ChatMessageDto
 import com.chatapp.chat.data.dto.SendMessageRequestDto
+import com.chatapp.chat.data.dto.response.ProfilePictureUploadUrlsResponse
 import com.chatapp.chat.data.mappers.toDomain
 import com.chatapp.chat.domain.message.ChatMessageService
 import com.chatapp.chat.domain.models.ChatMessage
+import com.chatapp.chat.domain.models.ProfilePictureUploadUrls
 import com.chatapp.core.data.network.delete
 import com.chatapp.core.data.network.get
 import com.chatapp.core.data.network.post
+import com.chatapp.core.data.network.safeCall
 import com.chatapp.core.domain.util.DataError
 import com.chatapp.core.domain.util.EmptyResult
 import com.chatapp.core.domain.util.Result
 import com.chatapp.core.domain.util.map
 import io.ktor.client.HttpClient
+import io.ktor.client.request.get as ktorGet
+import io.ktor.client.request.header
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 
 class KtorChatMessageService(
     private val httpClient: HttpClient
@@ -27,12 +35,54 @@ class KtorChatMessageService(
     override suspend fun sendMessage(
         chatId: String,
         content: String,
-        messageId: String?
+        messageId: String?,
+        imageUrls: List<String>?
     ): Result<ChatMessage, DataError.Remote> {
         return httpClient.post<SendMessageRequestDto, ChatMessageDto>(
             route = "/messages/$chatId",
-            body = SendMessageRequestDto(content = content, messageId = messageId)
+            body = SendMessageRequestDto(
+                content = content,
+                messageId = messageId,
+                imageUrls = imageUrls
+            )
         ).map { it.toDomain() }
+    }
+
+    override suspend fun getImageUploadUrl(
+        chatId: String,
+        mimeType: String
+    ): Result<ProfilePictureUploadUrls, DataError.Remote> {
+        return httpClient.post<Unit, ProfilePictureUploadUrlsResponse>(
+            route = "/messages/$chatId/image-upload-url",
+            queryParams = mapOf(
+                "mimeType" to mimeType
+            ),
+            body = Unit
+        ).map { it.toDomain() }
+    }
+
+    override suspend fun uploadImage(
+        uploadUrl: String,
+        imageBytes: ByteArray,
+        headers: Map<String, String>
+    ): EmptyResult<DataError.Remote> {
+        return safeCall {
+            httpClient.put {
+                url(uploadUrl)
+                headers.forEach { (key, value) ->
+                    header(key, value)
+                }
+                setBody(imageBytes)
+            }
+        }
+    }
+
+    override suspend fun downloadImage(url: String): Result<ByteArray, DataError.Remote> {
+        return safeCall {
+            httpClient.ktorGet {
+                url(url)
+            }
+        }
     }
 
     override suspend fun fetchMessages(

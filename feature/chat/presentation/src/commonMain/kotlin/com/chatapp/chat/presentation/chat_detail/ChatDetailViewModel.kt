@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import chirp.feature.chat.presentation.generated.resources.Res
 import chirp.feature.chat.presentation.generated.resources.chat_was_deleted
+import chirp.feature.chat.presentation.generated.resources.image_save_failed
+import chirp.feature.chat.presentation.generated.resources.image_saved_successfully
 import chirp.feature.chat.presentation.generated.resources.multiple_people_typing
 import chirp.feature.chat.presentation.generated.resources.several_people_typing
 import chirp.feature.chat.presentation.generated.resources.someone_typing
@@ -15,26 +17,34 @@ import chirp.feature.chat.presentation.generated.resources.today
 import com.chatapp.chat.domain.chat.ChatConnectionClient
 import com.chatapp.chat.domain.chat.ChatRepository
 import com.chatapp.chat.domain.message.MessageRepository
-import com.chatapp.chat.domain.models.ChatInfo
 import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatParticipant
 import com.chatapp.chat.domain.models.ConnectionState
 import com.chatapp.chat.domain.models.OutgoingNewMessage
 import com.chatapp.chat.domain.models.OutgoingUserTyping
+import com.chatapp.chat.presentation.chat_detail.attachment.compressImage
+import com.chatapp.chat.presentation.chat_detail.attachment.saveImageToDevice
+import com.chatapp.chat.presentation.chat_detail.model.PendingAttachment
+import com.chatapp.chat.presentation.chat_detail.model.PendingAttachmentStatus
+import com.chatapp.chat.presentation.chat_detail.model.StateWithMessagesInput
 import com.chatapp.chat.presentation.mappers.toUi
 import com.chatapp.chat.presentation.mappers.toUiList
 import com.chatapp.chat.presentation.model.MessageUi
-import com.chatapp.core.domain.auth.AuthInfo
+import com.chatapp.chat.presentation.profile.mediapicker.PickedImageData
 import com.chatapp.core.domain.auth.SessionStorage
 import com.chatapp.core.domain.util.DataErrorException
 import com.chatapp.core.domain.util.Paginator
+import com.chatapp.core.domain.util.Result
 import com.chatapp.core.domain.util.onFailure
 import com.chatapp.core.domain.util.onSuccess
 import com.chatapp.core.presentation.util.UiText
 import com.chatapp.core.presentation.util.toUiText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -58,20 +68,16 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-private data class StateWithMessagesInput(
-    val currentState: ChatDetailState,
-    val chatInfo: ChatInfo,
-    val authInfo: AuthInfo?,
-    val typingUsers: Map<String, Long>,
-    val chatParticipants: List<ChatParticipant>
-)
-
 class ChatDetailViewModel(
     private val chatRepository: ChatRepository,
     private val sessionStorage: SessionStorage,
     private val messageRepository: MessageRepository,
     private val connectionClient: ChatConnectionClient
 ): ViewModel() {
+
+    companion object {
+        const val MAX_IMAGE_ATTACHMENTS = 10
+    }
 
     private val eventChannel = Channel<ChatDetailEvent>()
     val events = eventChannel.receiveAsFlow()
@@ -121,9 +127,11 @@ class ChatDetailViewModel(
     private val _state = MutableStateFlow(ChatDetailState())
 
     private val canSendMessage = snapshotFlow { _state.value.messageTextFieldState.text.toString() }
-        .map { it.isBlank() }
-        .combine(connectionClient.connectionState) { isMessageBlank, connectionState ->
-            !isMessageBlank && connectionState == ConnectionState.CONNECTED
+        .combine(_state) { text, state ->
+            text.isNotBlank() || state.pendingAttachments.isNotEmpty()
+        }
+        .combine(connectionClient.connectionState) { hasContent, connectionState ->
+            hasContent && connectionState == ConnectionState.CONNECTED
         }
 
 
@@ -197,7 +205,104 @@ class ChatDetailViewModel(
             ChatDetailAction.OnHideBanner -> hideBanner()
             is ChatDetailAction.OnTopVisibleIndexChanged -> updateBanner(action.topVisibleIndex)
             is ChatDetailAction.OnFirstVisibleIndexChanged -> updateNearBottom(action.index)
+            is ChatDetailAction.OnImagesPicked -> onImagesPicked(action.images)
+            is ChatDetailAction.OnRemoveAttachment -> onRemoveAttachment(action.id)
+            is ChatDetailAction.OnImageClick -> onImageClick(action.imageUrls, action.index)
+            ChatDetailAction.OnDismissImageViewer -> onDismissImageViewer()
+            is ChatDetailAction.OnSaveImageClick -> onSaveImageClick(action.url)
             else -> Unit
+        }
+    }
+
+    private fun onImagesPicked(images: List<PickedImageData>) {
+        val remainingSlots = MAX_IMAGE_ATTACHMENTS - _state.value.pendingAttachments.size
+        if (remainingSlots <= 0) return
+
+        images.take(remainingSlots).forEachIndexed { index, image ->
+            val attachmentId = Uuid.random().toString()
+            _state.update {
+                it.copy(
+                    pendingAttachments = it.pendingAttachments + PendingAttachment(
+                        id = attachmentId,
+                        fileName = "image_${it.pendingAttachments.size + index + 1}.jpg",
+                        mimeType = image.mimeType ?: "image/jpeg",
+                        status = PendingAttachmentStatus.PROCESSING
+                    )
+                )
+            }
+
+            viewModelScope.launch {
+                val compressed = try {
+                    compressImage(image.bytes)
+                } catch (_: Exception) {
+                    null
+                }
+
+                _state.update { state ->
+                    state.copy(
+                        pendingAttachments = state.pendingAttachments.map { attachment ->
+                            if (attachment.id == attachmentId) {
+                                attachment.copy(
+                                    status = if (compressed != null) {
+                                        PendingAttachmentStatus.READY
+                                    } else {
+                                        PendingAttachmentStatus.FAILED
+                                    },
+                                    compressedBytes = compressed
+                                )
+                            } else attachment
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun onRemoveAttachment(id: String) {
+        _state.update {
+            it.copy(pendingAttachments = it.pendingAttachments.filterNot { attachment -> attachment.id == id })
+        }
+    }
+
+    private fun onImageClick(imageUrls: List<String>, index: Int) {
+        _state.update {
+            it.copy(
+                viewerImageUrls = imageUrls,
+                viewerStartIndex = index
+            )
+        }
+    }
+
+    private fun onDismissImageViewer() {
+        _state.update {
+            it.copy(viewerImageUrls = null)
+        }
+    }
+
+    private fun onSaveImageClick(url: String) {
+        viewModelScope.launch {
+            val message = messageRepository
+                .downloadImage(url)
+                .let { result ->
+                    when (result) {
+                        is Result.Success -> {
+                            val saved = try {
+                                saveImageToDevice(result.data, "chirp_${Uuid.random()}.jpg")
+                            } catch (_: Exception) {
+                                false
+                            }
+                            if (saved) {
+                                Res.string.image_saved_successfully
+                            } else {
+                                Res.string.image_save_failed
+                            }
+                        }
+
+                        is Result.Failure -> Res.string.image_save_failed
+                    }
+                }
+
+            eventChannel.send(ChatDetailEvent.OnImageSaved(UiText.Resource(message)))
         }
     }
 
@@ -343,15 +448,38 @@ class ChatDetailViewModel(
     private fun sendMessage() {
         val currentChatId = _chatId.value
         val content = state.value.messageTextFieldState.text.toString().trim()
-        if (content.isBlank() || currentChatId == null) {
+        val readyAttachments = state.value.pendingAttachments
+            .filter { it.status == PendingAttachmentStatus.READY && it.compressedBytes != null }
+
+        if ((content.isBlank() && readyAttachments.isEmpty()) || currentChatId == null) {
             return
         }
 
         viewModelScope.launch {
+            _state.update { it.copy(isSendingMessage = true) }
+
+            val imageUrls = coroutineScope {
+                readyAttachments
+                    .map { attachment ->
+                        async {
+                            messageRepository
+                                .uploadChatImage(
+                                    chatId = currentChatId,
+                                    imageBytes = attachment.compressedBytes!!,
+                                    mimeType = attachment.mimeType
+                                )
+                                .let { result -> (result as? Result.Success)?.data }
+                        }
+                    }
+                    .awaitAll()
+                    .filterNotNull()
+            }
+
             val message = OutgoingNewMessage(
                 chatId = currentChatId,
                 messageId = Uuid.random().toString(),
-                content = content
+                content = content,
+                imageUrls = imageUrls
             )
 
             messageRepository
@@ -360,10 +488,13 @@ class ChatDetailViewModel(
                     stopTyping(currentChatId)
 
                     state.value.messageTextFieldState.clearText()
+                    _state.update { it.copy(pendingAttachments = emptyList()) }
                 }
                 .onFailure { error ->
                     eventChannel.send(ChatDetailEvent.OnError(error.toUiText()))
                 }
+
+            _state.update { it.copy(isSendingMessage = false) }
         }
     }
 

@@ -32,6 +32,18 @@ interface MessageRepository {
         messageId: String
     ): EmptyResult<DataError>
 
+    // Compresses/uploads a single chat image via the signed-URL flow and returns its public
+    // URL, ready to pass into OutgoingNewMessage.imageUrls. Caller uploads each image
+    // individually so per-image progress/failure can be shown in the composer.
+    suspend fun uploadChatImage(
+        chatId: String,
+        imageBytes: ByteArray,
+        mimeType: String
+    ): Result<String, DataError.Remote>
+
+    // Used by the full-screen image viewer's "save to device" action.
+    suspend fun downloadImage(url: String): Result<ByteArray, DataError.Remote>
+
     suspend fun retryMessage(messageId: String): EmptyResult<DataError>
 
     suspend fun deleteMessage(messageId: String): EmptyResult<DataError.Remote>

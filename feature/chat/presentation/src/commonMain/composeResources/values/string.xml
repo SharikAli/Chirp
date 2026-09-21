@@ -70,4 +70,12 @@
     <string name="remove">Remove</string>
     <string name="remove_member_confirmation_title">Remove %1$s from this chat?</string>
     <string name="remove_member_confirmation_desc">%1$s will no longer be able to see or send messages in this chat.</string>
+
+    <string name="attach_image">Attach image</string>
+    <string name="remove_attachment">Remove attachment</string>
+    <string name="save_to_device">Save to device</string>
+    <string name="close">Close</string>
+    <string name="image_saved_successfully">Image saved successfully</string>
+    <string name="image_save_failed">Couldn\'t save image</string>
+    <string name="max_images_reached">You can attach up to %1$d images</string>
 </resources>

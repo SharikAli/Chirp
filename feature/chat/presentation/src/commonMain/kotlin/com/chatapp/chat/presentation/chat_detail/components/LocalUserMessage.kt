@@ -36,7 +36,8 @@ fun LocalUserMessage(
     onDismissMessageMenu: () -> Unit,
     onDeleteClick: () -> Unit,
     onRetryClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onImageClick: (imageUrls: List<String>, index: Int) -> Unit = { _, _ -> }
 ) {
     Row(
         modifier = modifier
@@ -57,7 +58,15 @@ fun LocalUserMessage(
                 },
                 onLongClick = {
                     onMessageLongClick()
-                }
+                },
+                attachments = if (message.imageUrls.isNotEmpty()) {
+                    {
+                        MessageImageGrid(
+                            imageUrls = message.imageUrls,
+                            onImageClick = { index -> onImageClick(message.imageUrls, index) }
+                        )
+                    }
+                } else null
             )
 
             ChirpDropDownMenu(

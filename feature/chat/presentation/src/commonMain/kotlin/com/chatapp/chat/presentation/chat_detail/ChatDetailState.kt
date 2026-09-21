@@ -2,6 +2,7 @@ package com.chatapp.chat.presentation.chat_detail
 
 import androidx.compose.foundation.text.input.TextFieldState
 import com.chatapp.chat.domain.models.ConnectionState
+import com.chatapp.chat.presentation.chat_detail.model.PendingAttachment
 import com.chatapp.chat.presentation.model.ChatUi
 import com.chatapp.chat.presentation.model.MessageUi
 import com.chatapp.core.presentation.util.UiText
@@ -22,7 +23,11 @@ data class ChatDetailState(
     val isNearBottom: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
     val typingText: UiText? = null,
-    val showLeaveChatConfirmation: Boolean = false
+    val showLeaveChatConfirmation: Boolean = false,
+    val pendingAttachments: List<PendingAttachment> = emptyList(),
+    val isSendingMessage: Boolean = false,
+    val viewerImageUrls: List<String>? = null,
+    val viewerStartIndex: Int = 0
 )
 
 data class BannerState(

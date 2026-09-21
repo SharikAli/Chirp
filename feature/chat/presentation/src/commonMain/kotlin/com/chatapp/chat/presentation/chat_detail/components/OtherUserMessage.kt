@@ -17,7 +17,8 @@ import com.chatapp.core.designsystem.components.chat.TrianglePosition
 fun OtherUserMessage(
     message: MessageUi.OtherUserMessage,
     color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onImageClick: (imageUrls: List<String>, index: Int) -> Unit = { _, _ -> }
 ) {
     Row(
         modifier = modifier
@@ -34,7 +35,15 @@ fun OtherUserMessage(
             sender = message.sender.username,
             trianglePosition = TrianglePosition.LEFT,
             color = color,
-            formattedDateTime = message.formattedSentTime.asString()
+            formattedDateTime = message.formattedSentTime.asString(),
+            attachments = if (message.imageUrls.isNotEmpty()) {
+                {
+                    MessageImageGrid(
+                        imageUrls = message.imageUrls,
+                        onImageClick = { index -> onImageClick(message.imageUrls, index) }
+                    )
+                }
+            } else null
         )
     }
 }

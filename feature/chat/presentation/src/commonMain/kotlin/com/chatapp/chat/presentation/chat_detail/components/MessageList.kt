@@ -41,7 +41,8 @@ fun MessageList(
     onRetryPaginationClick: () -> Unit,
     onDismissMessageMenu: () -> Unit,
     onDeleteMessageClick: (MessageUi.LocalUserMessage) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onImageClick: (imageUrls: List<String>, index: Int) -> Unit = { _, _ -> }
 ) {
     if (messages.isEmpty()) {
         Box(
@@ -73,6 +74,7 @@ fun MessageList(
                     onDismissMessageMenu = onDismissMessageMenu,
                     onDeleteClick = onDeleteMessageClick,
                     onRetryClick = onMessageRetryClick,
+                    onImageClick = onImageClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem()

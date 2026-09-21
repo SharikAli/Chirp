@@ -62,10 +62,12 @@ import com.chatapp.chat.domain.models.ChatMessage
 import com.chatapp.chat.domain.models.ChatMessageDeliveryStatus
 import com.chatapp.chat.presentation.chat_detail.components.ChatDetailHeader
 import com.chatapp.chat.presentation.chat_detail.components.DateChip
+import com.chatapp.chat.presentation.chat_detail.components.ImageViewerDialog
 import com.chatapp.chat.presentation.chat_detail.components.MessageBannerListener
 import com.chatapp.chat.presentation.chat_detail.components.MessageBox
 import com.chatapp.chat.presentation.chat_detail.components.MessageList
 import com.chatapp.chat.presentation.chat_detail.components.PaginationScrollListener
+import com.chatapp.chat.presentation.profile.mediapicker.rememberMultiImagePickerLauncher
 import com.chatapp.chat.presentation.components.ChatHeader
 import com.chatapp.chat.presentation.components.EmptySection
 import com.chatapp.chat.presentation.model.ChatUi
@@ -117,6 +119,10 @@ fun ChatDetailRoot(
 
             is ChatDetailEvent.OnChatDeletedRemotely -> {
                 onBack()
+                snackbarState.showSnackbar(event.message.asStringAsync())
+            }
+
+            is ChatDetailEvent.OnImageSaved -> {
                 snackbarState.showSnackbar(event.message.asStringAsync())
             }
         }
@@ -215,6 +221,10 @@ fun ChatDetailScreen(
     }
     val density = LocalDensity.current
 
+    val imagePickerLauncher = rememberMultiImagePickerLauncher(maxItems = 10) { images ->
+        onAction(ChatDetailAction.OnImagesPicked(images))
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -305,6 +315,9 @@ fun ChatDetailScreen(
                             onRetryPaginationClick = {
                                 onAction(ChatDetailAction.OnRetryPaginationClick)
                             },
+                            onImageClick = { imageUrls, index ->
+                                onAction(ChatDetailAction.OnImageClick(imageUrls, index))
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
@@ -340,6 +353,11 @@ fun ChatDetailScreen(
                                 onSendClick = {
                                     onAction(ChatDetailAction.OnSendMessageClick)
                                 },
+                                pendingAttachments = state.pendingAttachments,
+                                onAttachClick = { imagePickerLauncher.launch() },
+                                onRemoveAttachment = { id ->
+                                    onAction(ChatDetailAction.OnRemoveAttachment(id))
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .imePadding()
@@ -368,6 +386,11 @@ fun ChatDetailScreen(
                             connectionState = state.connectionState,
                             onSendClick = {
                                 onAction(ChatDetailAction.OnSendMessageClick)
+                            },
+                            pendingAttachments = state.pendingAttachments,
+                            onAttachClick = { imagePickerLauncher.launch() },
+                            onRemoveAttachment = { id ->
+                                onAction(ChatDetailAction.OnRemoveAttachment(id))
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -417,6 +440,19 @@ fun ChatDetailScreen(
             onConfirmClick = {
                 onAction(ChatDetailAction.OnConfirmLeaveChat)
             },
+        )
+    }
+
+    if (state.viewerImageUrls != null) {
+        ImageViewerDialog(
+            imageUrls = state.viewerImageUrls,
+            startIndex = state.viewerStartIndex,
+            onDismiss = {
+                onAction(ChatDetailAction.OnDismissImageViewer)
+            },
+            onSaveClick = { url ->
+                onAction(ChatDetailAction.OnSaveImageClick(url))
+            }
         )
     }
 }
